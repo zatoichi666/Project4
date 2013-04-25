@@ -1,0 +1,13 @@
+1. Establish interface form
+2. Create login dialog
+3. Create .xml metadata class for storing package info
+4. Create policy class for storing privs.  
+
+List<priviledge> 
+
+struct priviledge {
+bool canXYZ;
+bool canABC;
+};
+
+5. Create check-in and check-out classes.
