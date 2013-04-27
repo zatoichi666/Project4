@@ -16,7 +16,6 @@
 // Respective messages into strongly composed BlockingQueues.              //
 /////////////////////////////////////////////////////////////////////////////
 
-
 #ifndef SENDER_H
 #define SENDER_H
 
@@ -26,14 +25,13 @@
 #include "BlockingQueue.h"
 #include "Packetizer.h"
 
-
 typedef enum messageType_e
 {
 	sendBin,
 	queryMd5,
 	ackMd5,
-	ackBin
-
+	ackBin,
+	ackLogin
 };
 
 typedef enum HealthType_e
@@ -43,10 +41,6 @@ typedef enum HealthType_e
 };
 
 std::string ToString(int i);
-
-
-
-
 
 class SenderThread : public threadBase
 {
@@ -73,12 +67,14 @@ public:
 private:
 	std::string makeQueryMd5AckMessage(std::string filename, std::string listenIp, int listenPort);
 	std::string makeMd5AckMessage(std::string md5val, std::string ipSender, int portSender);
+	std::string makeAckLoginMessage(std::string result, std::string ipSender, int portSender);
 	std::string makeAckBinMessage(std::string filename, std::string listenIp, int listenPort);
 	Socket _s;
 	BlockingQueue<std::string> _q;
 	SenderThread* pSender;
 	int myCount;
 	static int count;
+
 };
 
 
@@ -104,6 +100,7 @@ class txtAckBinThread : public threadBase
 {
 public:
 	txtAckBinThread(TextTalker sndr, std::string fileName, int port, std::string ip ) : sndr_(sndr), port_(port), ip_(ip), fileName_(fileName) {}
+
 private:
 	void run()
 	{
@@ -114,6 +111,5 @@ private:
 	std::string ip_;
 	int port_;
 };
-
 
 #endif

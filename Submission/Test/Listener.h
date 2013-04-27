@@ -30,21 +30,6 @@
 
 //std::string ToString(int i);
 
-///////////////////////////////////////////////////////////////
-// ReceverThread derived class
-
-class ReceiverThread : public threadBase
-{
-public:
-	ReceiverThread(BlockingQueue<std::string>& q, Socket sock);
-private:
-	gCSLock<1> tLock;
-	virtual void run();
-
-	BlockingQueue<std::string>& _q;
-	Socket& _s;
-};
-
 
 ///////////////////////////////////////////////////
 // ClientHandlerThread thread
@@ -52,7 +37,7 @@ private:
 class ClientHandlerThread : public tthreadBase
 {
 public:
-	ClientHandlerThread(Socket s, BlockingQueue<std::string>& q) : s_(s), q_(q) {}
+	ClientHandlerThread(Socket s, BlockingQueue<std::string> q) : s_(s), q_(q) {}
 private:
 	void run();
 	
@@ -87,6 +72,7 @@ private:
 	void processMessage(std::string message);
 	void Receiver::sendAckBinMsg(std::string fileName, int port, std::string ip );
 	void Receiver::processAckBinMsg(std::string message );
+	void Receiver::processLoginRequestMessage(std::string message );
 	void Receiver::processQueryMd5Msg(std::string message );
 	void Receiver::processAckMd5Msg(std::string message );
 	FileSystem::FileInfo Receiver::processSendBinMsg(std::string message, int& isLastPacket);

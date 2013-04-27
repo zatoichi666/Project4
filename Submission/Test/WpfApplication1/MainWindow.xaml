@@ -24,5 +24,6 @@
             <Button Content="Get Files" Width="75" Margin="10" Click="Button_Click_2"/>
             <Button x:Name="button3" Content="Post Message" Width="96" Margin="10,10,10,10.2" Click="Button_Click_3"/>
         </StackPanel>
+        <Button Content="Get Message" HorizontalAlignment="Left" Height="35" Margin="83,19.6,0,0" Grid.Row="3" VerticalAlignment="Top" Width="90" Click="Button_Click_4"/>
     </Grid>
 </Window>

@@ -12,12 +12,7 @@
 #include "Locks.h"
 #include <sstream>
 
-#ifdef TRACING
-  #include "locks.h"
-  #define TRACE(msg) sout << "\n  " << msg;
-#else
-  #define TRACE(msg) ;
-#endif
+
 
 long SocketSystem::count = 0;
 
@@ -228,6 +223,7 @@ bool Socket::connect(std::string url, int port, bool throwError, size_t MaxTries
     ::Sleep(100);
   }
   
+  TRACE("I believe we are connected to " + url);
   return true;
 }
 //
@@ -498,7 +494,7 @@ SOCKET SocketListener::waitForConnect()
     if(InvalidSocketCount >= 20)
       throw std::exception("invalid socket connection");
   } while (toClient == INVALID_SOCKET);
-  TRACE("connection establishted");
+  TRACE("connection established");
   return toClient;
 }
 //

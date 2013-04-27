@@ -94,6 +94,9 @@ void TextTalker::start(messageType_e msgType, std::string ip, int port, std::str
 	if (msgType == ackBin)
 		_q.enQ(makeAckBinMessage(payload, ip, port ));
 
+	if (msgType == ackLogin)
+		_q.enQ(makeAckLoginMessage(payload, ip, port ));
+
 	_q.enQ("stop");
 
 	pSender->join();
@@ -126,6 +129,20 @@ std::string TextTalker::makeMd5AckMessage(std::string md5val, std::string ipSend
 	header+="ipSender='" + ipSender + "'";
 	header+="portSender='" + ToString(portSender) + "'";
 	header+="md5val='" + md5val + "'";
+	header+= "]";
+
+	return header;
+}
+
+//----------< Text-based message for confirming login >------------------------------------- 
+
+std::string TextTalker::makeAckLoginMessage(std::string result, std::string ipSender, int portSender)
+{
+	std::string header;
+	header = "[ackLogin;";
+	header+="result='" + result + "'";
+	header+="ipSender='" + ipSender + "'";
+	header+="portSender='" + ToString(portSender) + "'";	
 	header+= "]";
 
 	return header;

@@ -39,8 +39,8 @@ namespace WpfApplication1
         String serverIP;
         String userName;
         String password;
-        
-        
+
+
 
         private mockChannel.IChannel chan;
 
@@ -54,8 +54,6 @@ namespace WpfApplication1
 
             InitializeComponent();
 
-            
-            
         }
 
         private void AddItem(string item)
@@ -76,28 +74,28 @@ namespace WpfApplication1
             return header;
         }
 
-
-        private String MakeLoginMessage()
+        private String MakeLoginRequestMessage()
         {
             String header = "";
-            header += "[loginMsg;";
-            header += "uName'" + userName + "'";
-            header += "pWord'" + password + "'";
+            header += "[loginReqMsg;";
+            header += "uName='" + userName + "'";
+            header += "pWord='" + password + "'";
             header += "]";
             return header;
         }
 
         private void Run()
         {
-            string msg = MakeQueryMd5AckMessage("C:\\School\\CSE-687\\Project3\\Submission\\Test\\flyby_plusShaped.scn","127.0.0.1", 8050);
-                       
-            chan.postMessage(msg);
+            //string msg = MakeLoginRequestMessage();
+            //chan.postMessage(msg);
 
             while (true)
             {
-                msg = chan.getMessage();
+                string msg = chan.getMessage();
                 Dispatcher.Invoke(myItemDelegate, DispatcherPriority.Background, new object[] { msg });
+
             }
+
         }
 
         private void Window_Loaded_1(object sender, RoutedEventArgs e)
@@ -107,10 +105,11 @@ namespace WpfApplication1
             string[] files = Directory.GetFiles(textBox1.Text, "*.*");
             foreach (string file in files)
                 listBox1.Items.Add(System.IO.Path.GetFileName(file));
+
             button3.IsEnabled = false;
             chan = mockChannel.IChannel.CreateChannel();
+
             Thread clientReceiveThread = new Thread(new ThreadStart(this.Run));
-            
             clientReceiveThread.IsBackground = true;
             clientReceiveThread.Start();
         }
@@ -158,6 +157,13 @@ namespace WpfApplication1
                 listBox1.Items.Add("    Posted Message: " + item);
             }
             button3.IsEnabled = false;
+        }
+
+        private void Button_Click_4(object sender, RoutedEventArgs e)
+        {
+            string msg = chan.getMessage();
+            Dispatcher.Invoke(myItemDelegate, DispatcherPriority.Background, new object[] { msg });
+
         }
     }
 }

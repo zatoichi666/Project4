@@ -9,7 +9,7 @@
 #include "BlockingQueue.h"
 #include "Threads.h"
 #include "locks.h"
-#include "Sender.h"
+//#include "Sender.h"
 
 #include <string>
 #include <iostream>
@@ -46,50 +46,75 @@ typedef BlockingQueue<stdMessage> BQueue;
 class SendThread : public tthreadBase
 {
 public:
-	SendThread(BQueue* pInQ, Socket* pSock) : pInQ_(pInQ), pSock_(pSock) {}
+	SendThread(BlockingQueue<std::string>* pInQ, Socket* pSock, std::string msg) : pInQ_(pInQ), pSock_(pSock),  msg_(msg)
+	{ }
 	void run()
 	{
-		while(true)
-		{
-			stdMessage msg = pInQ_->deQ();
-			
-			if(msg == "ChannelShutDown")
-				break;
 
-			pSock_->send(msg.c_str(),msg.size());
-		}
+		TRACE("  SendThread sending: " + msg_ + " to " + pSock_->System().getRemoteIP(pSock_));
+
+		pSock_->writeLine(msg_);
+
+		TRACE("  Successfully wrote the message out");
 	}
 private:	
-	BQueue* pInQ_;
+	std::string msg_;
+	BlockingQueue<std::string>* pInQ_;
 	Socket* pSock_;
 };
 
 
+class ClientHandlerThread : public tthreadBase
+{
+
+public:
+	ClientHandlerThread(Socket s, BlockingQueue<std::string>& q) : s_(s), q_(q) {}
+private:
+	void run()
+	{
+		std::string msg;
+		do
+		{
+
+			msg = s_.readLine();
+
+			if (msg == "")
+				break;
+			q_.enQ(msg);  // This isn't happening
+
+		} while (msg!= "quit");
+	}
+	Socket s_;
+	BlockingQueue<std::string>& q_;
+};
+
 /////////////////////////////////////////////////////////////////////////
 // Fawcett thread, used to make sure that will work with C++\CLI code
 
-class Thread : public tthreadBase
+class ListenThread : public threadBase
 {
 public:
-	Thread(BQueue* pInQ, BQueue* pOutQ) : pInQ_(pInQ), pOutQ_(pOutQ) {}
-	void run()
-	{
-		while(true)
-		{
-			stdMessage msg = pInQ_->deQ();
-			
-			if(msg == "ChannelShutDown")
-				break;
+	ListenThread(int port, BlockingQueue<std::string>& pInQ) : q_(pInQ), listener_(port), stop_(false) {}
+	void stop(bool end) { stop_ = end; }
 
-
-		}
-	}
 private:
 
-	BQueue* pInQ_;
-	BQueue* pOutQ_;
-	
+	void run()
+	{
+		while(!stop_)
+		{
 
+			SOCKET s = listener_.waitForConnect();
+			TRACE("  Trying to create a ClientHandlerThread");			
+			ClientHandlerThread* pCh = new ClientHandlerThread(s, q_);
+			pCh->start();
+
+		}
+
+	}
+	bool stop_;
+	BlockingQueue<std::string>& q_;
+	SocketListener listener_;
 };
 
 /////////////////////////////////////////////////////////////////////////
@@ -98,16 +123,13 @@ private:
 ref class MockChannel : public IChannel
 {
 public:
-	MockChannel() : pInQ(new BQueue), pOutQ(new BQueue), sock_(new Socket)
+	MockChannel() : pInQ(new BlockingQueue<std::string>), pOutQ(new BlockingQueue<std::string>), sock_(new Socket)
 	{
-		//Thread* pThread = new Thread(pInQ, pOutQ);
-		
+		ListenThread* pListenThread = new ListenThread(8080, *pOutQ);
+		pListenThread->start();
 
-		SendThread* pSendThread = new SendThread(pOutQ, sock_);
-		sock_->connect("127.0.0.1",8050,false);
 
-		pSendThread->start();
-		
+
 	}
 	~MockChannel()
 	{
@@ -123,13 +145,27 @@ public:
 
 	virtual Message^ getMessage() override
 	{
-		stdMessage smsg = pOutQ->deQ();
-		return ConvertMsgUp(smsg);
+		stdMessage sMsg, qMsg;
+		showQueues(qMsg);
+		sMsg = pOutQ->deQ();
+		return ConvertMsgUp(sMsg);
+
+
 	}
 	virtual void postMessage(Message^ msg) override
 	{
-		stdMessage smsg = ConvertMsgDown(msg);
-		pInQ->enQ(smsg);
+		SendThread* pSendThread = new SendThread(pInQ, sock_, ConvertMsgDown(msg));
+
+		if (!sock_->connect("127.0.0.1",8050,false))
+		{
+			TRACE("Couldn't complete connection");
+			delete pSendThread;
+		}
+		else
+			TRACE("Successfully completed connection");
+
+		pSendThread->start();
+
 	}
 
 	void showQueues(const std::string& msg)
@@ -142,8 +178,8 @@ public:
 
 private:
 	Socket* sock_;
-	BQueue* pInQ;
-	BQueue* pOutQ;
+	BlockingQueue<std::string>* pInQ;
+	BlockingQueue<std::string>* pOutQ;
 };
 
 IChannel^ IChannel::CreateChannel()

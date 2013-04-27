@@ -124,6 +124,14 @@
 #include <string>
 #include <winsock2.h>
 
+
+#ifdef TRACING
+  #include "locks.h"
+  #define TRACE(msg) sout << "\n  " << msg;
+#else
+  #define TRACE(msg) ;
+#endif
+
 /////////////////////////////////////////////////////////////////////
 // SocketSystem class loads and unloads WinSock library
 // and provides a few system services

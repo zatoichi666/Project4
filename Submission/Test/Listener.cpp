@@ -108,6 +108,11 @@ void Receiver::processMessage(std::string message)
 		int isLastPacket = 0;
 		processAckBinMsg( message );
 	}
+	if (messageType == "loginReqMsg")
+	{
+		int isLastPacket = 0;
+		processLoginRequestMessage( message );
+	}
 
 }
 
@@ -131,6 +136,44 @@ void Receiver::processAckMd5Msg(std::string message )
 	std::string md5_s = message.substr(posMd5Header,md5EntryLength);
 
 	sout << " ackMD5: " << md5_s << " from IP: " << dIp << " port: " << dPort << "\n";
+}
+
+void Receiver::processLoginRequestMessage(std::string message )
+{
+	size_t posuName = message.find("uName='") + 7;
+	size_t uNameEntryLength = message.find("'",posuName) - posuName;
+	std::string uName = message.substr(posuName,uNameEntryLength);
+
+	size_t pospWord = message.find("pWord='") + 7;
+	size_t pWordEntryLength = message.find("'",pospWord) - pospWord;
+	std::string pWord = message.substr(pospWord,pWordEntryLength);
+
+	for (int i=0;i<3;i++)
+	{
+		Sleep(1000);
+
+
+		if (uName == "admin" && pWord == "password")
+		{
+			sout << "Authentication successful, " << uName << "\n";
+			std::thread thr([&]() 
+			{
+				TextTalker ta;
+				ta.start(ackLogin, "127.0.0.1", 8080, "1", "127.0.0.1", 8080 );
+			});
+			thr.join();
+		}
+		else
+		{
+			sout << "Authentication unsuccessful\n";
+			std::thread thr([&]() 
+			{
+				TextTalker ta;
+				ta.start(ackLogin, "127.0.0.1", 8080, "0", "127.0.0.1", 8080 );
+			});
+			thr.join();
+		}
+	}
 }
 
 void Receiver::processQueryMd5Msg(std::string message )
@@ -171,15 +214,15 @@ void Receiver::processQueryMd5Msg(std::string message )
 			fileContents += packet;
 		}
 		std::string fileMd5Value;
-		sout << " queryMD5: Calculating md5 1000000 times\n";
+		//sout << " queryMD5: Calculating md5 1000000 times\n";
 
 		std::thread thr([&]() 
 		{
 			std::clock_t start;
 			double duration;
 			start = std::clock();
-			for (int i=0;i<1000000;i++)		
-				fileMd5Value = md5(fileContents.c_str());			
+			//for (int i=0;i<1000000;i++)		
+			fileMd5Value = md5(fileContents.c_str());			
 			duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
 			sout << " queryMD5: Calculated md5: " << fileMd5Value << " in " << duration << " seconds.\n";
 			TextTalker ta;
@@ -215,12 +258,12 @@ void Receiver::processAckBinMsg(std::string message )
 
 void Receiver::sendAckBinMsg(std::string fileName, int port, std::string ip )
 {	
-	
+
 
 	std::thread thr([&]() 
 	{
-	TextTalker ta;
-	ta.start(ackBin, ip, port, fileName, ip, port );
+		TextTalker ta;
+		ta.start(ackBin, ip, port, fileName, ip, port );
 	});
 	thr.join();
 
