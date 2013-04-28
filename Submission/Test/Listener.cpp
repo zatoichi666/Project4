@@ -29,6 +29,7 @@ void ClientHandlerThread::run()
 	{
 		doLog("receive thread reading line");
 		msg = s_.readLine();
+		TRACE(msg);
 		if(msg == "")
 			break;
 		q_.enQ(msg);
@@ -148,32 +149,30 @@ void Receiver::processLoginRequestMessage(std::string message )
 	size_t pWordEntryLength = message.find("'",pospWord) - pospWord;
 	std::string pWord = message.substr(pospWord,pWordEntryLength);
 
-	for (int i=0;i<3;i++)
+
+
+
+	if (uName == "admin" && pWord == "password")
 	{
-		Sleep(1000);
-
-
-		if (uName == "admin" && pWord == "password")
+		sout << "Authentication successful, " << uName << "\n";
+		std::thread thr([&]() 
 		{
-			sout << "Authentication successful, " << uName << "\n";
-			std::thread thr([&]() 
-			{
-				TextTalker ta;
-				ta.start(ackLogin, "127.0.0.1", 8080, "1", "127.0.0.1", 8080 );
-			});
-			thr.join();
-		}
-		else
-		{
-			sout << "Authentication unsuccessful\n";
-			std::thread thr([&]() 
-			{
-				TextTalker ta;
-				ta.start(ackLogin, "127.0.0.1", 8080, "0", "127.0.0.1", 8080 );
-			});
-			thr.join();
-		}
+			TextTalker ta;
+			ta.start(ackLogin, "127.0.0.1", 8080, "1", "127.0.0.1", 8080 );
+		});
+		thr.join();
 	}
+	else
+	{
+		sout << "Authentication unsuccessful\n";
+		std::thread thr([&]() 
+		{
+			TextTalker ta;
+			ta.start(ackLogin, "127.0.0.1", 8080, "0", "127.0.0.1", 8080 );
+		});
+		thr.join();
+	}
+
 }
 
 void Receiver::processQueryMd5Msg(std::string message )

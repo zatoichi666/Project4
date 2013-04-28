@@ -37,7 +37,7 @@
 class ClientHandlerThread : public tthreadBase
 {
 public:
-	ClientHandlerThread(Socket s, BlockingQueue<std::string> q) : s_(s), q_(q) {}
+	ClientHandlerThread(Socket s, BlockingQueue<std::string>& q) : s_(s), q_(q) {}
 private:
 	void run();
 	

@@ -149,8 +149,6 @@ public:
 		showQueues(qMsg);
 		sMsg = pOutQ->deQ();
 		return ConvertMsgUp(sMsg);
-
-
 	}
 	virtual void postMessage(Message^ msg) override
 	{

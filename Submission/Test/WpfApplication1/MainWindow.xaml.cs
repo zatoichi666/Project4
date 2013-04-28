@@ -40,8 +40,6 @@ namespace WpfApplication1
         String userName;
         String password;
 
-
-
         private mockChannel.IChannel chan;
 
         private Action<string> myItemDelegate;
@@ -86,14 +84,16 @@ namespace WpfApplication1
 
         private void Run()
         {
-            //string msg = MakeLoginRequestMessage();
-            //chan.postMessage(msg);
+
+            Dispatcher.BeginInvoke(new Action(() => { labelConnected.Visibility = Visibility.Hidden; }));
+            string msg = MakeLoginRequestMessage();
+            chan.postMessage(msg);
 
             while (true)
             {
-                string msg = chan.getMessage();
+                msg = chan.getMessage();
+                processMessage(msg);
                 Dispatcher.Invoke(myItemDelegate, DispatcherPriority.Background, new object[] { msg });
-
             }
 
         }
@@ -161,9 +161,48 @@ namespace WpfApplication1
 
         private void Button_Click_4(object sender, RoutedEventArgs e)
         {
-            string msg = chan.getMessage();
-            Dispatcher.Invoke(myItemDelegate, DispatcherPriority.Background, new object[] { msg });
+            string msg = MakeLoginRequestMessage();
+            chan.postMessage(msg);
+        }
+
+        private void processMessage(string message)
+        {
+            int posOpenSquareBracket = message.IndexOf("[");
+            int posMsgTypeSemicolon = message.IndexOf(";");
+            
+            string messageType = "";
+            if (posOpenSquareBracket > -1)
+                if (posMsgTypeSemicolon > -1)
+                    messageType = message.Substring(posOpenSquareBracket + 1, posMsgTypeSemicolon - posOpenSquareBracket - 1);
+         
+            if (messageType == "sendBin")
+            {
+
+            }
+            if (messageType == "queryMd5")
+            {
+
+            }
+            if (messageType == "ackMd5")
+            {
+
+            }
+            if (messageType == "ackBin")
+            {
+
+            }
+            if (messageType == "loginReqMsg")
+            {
+
+            }
+            if (messageType == "ackLogin")
+            {
+                Dispatcher.BeginInvoke(new Action(() => {
+                    listBox1.Items.Add("    Just Received ackLogin ");
+                }));
+            }
 
         }
+
     }
 }
