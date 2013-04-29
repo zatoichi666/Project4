@@ -27,6 +27,7 @@
 #include "Sockets.h"
 #include "BlockingQueue.h"
 #include "FileSystem.h"
+#include "AuthenticateXml.h"
 
 //std::string ToString(int i);
 
@@ -67,6 +68,8 @@ public:
 	std::vector<FileSystem::File> getFileList();
 	
 private:
+
+	userList ul;
 	BlockingQueue<std::string> q_;
 	ListenThread* pLt;
 	void processMessage(std::string message);

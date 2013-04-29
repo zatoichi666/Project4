@@ -85,7 +85,12 @@ namespace WpfApplication1
         private void Run()
         {
 
-            Dispatcher.BeginInvoke(new Action(() => { labelConnected.Visibility = Visibility.Hidden; }));
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                setFormControls(false);
+            }));
+
+
             string msg = MakeLoginRequestMessage();
             chan.postMessage(msg);
 
@@ -98,6 +103,20 @@ namespace WpfApplication1
 
         }
 
+        private void setFormControls(Boolean ctrl)
+        {
+            buttonPostMessage.IsEnabled = ctrl;
+            buttonBrowse.IsEnabled = ctrl;
+            buttonGetFiles.IsEnabled = ctrl;
+            buttonGetMessage.IsEnabled = ctrl;
+            textBox1.IsEnabled = ctrl;
+            listBox1.IsEnabled = ctrl;
+            if (ctrl == true)
+                labelConnected.Content = "Connected";
+            else
+                labelConnected.Content = "Disconnected";
+        }
+
         private void Window_Loaded_1(object sender, RoutedEventArgs e)
         {
             myItemDelegate = this.AddItem;
@@ -106,12 +125,14 @@ namespace WpfApplication1
             foreach (string file in files)
                 listBox1.Items.Add(System.IO.Path.GetFileName(file));
 
-            button3.IsEnabled = false;
+            setFormControls(false);
+
             chan = mockChannel.IChannel.CreateChannel();
 
             Thread clientReceiveThread = new Thread(new ThreadStart(this.Run));
             clientReceiveThread.IsBackground = true;
             clientReceiveThread.Start();
+
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
@@ -144,7 +165,7 @@ namespace WpfApplication1
                 foreach (string file in files)
                     listBox1.Items.Add(System.IO.Path.GetFileName(file));
             }
-            button3.IsEnabled = true;
+            buttonPostMessage.IsEnabled = true;
         }
 
         private void Button_Click_3(object sender, RoutedEventArgs e)
@@ -156,7 +177,7 @@ namespace WpfApplication1
                 chan.postMessage(item);
                 listBox1.Items.Add("    Posted Message: " + item);
             }
-            button3.IsEnabled = false;
+            buttonPostMessage.IsEnabled = false;
         }
 
         private void Button_Click_4(object sender, RoutedEventArgs e)
@@ -165,16 +186,27 @@ namespace WpfApplication1
             chan.postMessage(msg);
         }
 
+        private Boolean processAckLoginMsg(string message)
+        {
+            int posCredentialsAccepted = message.IndexOf("result='");
+
+            string credentialsAccepted = "";
+            if (posCredentialsAccepted > -1)
+                credentialsAccepted = message.Substring(posCredentialsAccepted + 8, 1);
+
+            return credentialsAccepted == "1";
+        }
+
         private void processMessage(string message)
         {
             int posOpenSquareBracket = message.IndexOf("[");
             int posMsgTypeSemicolon = message.IndexOf(";");
-            
+
             string messageType = "";
             if (posOpenSquareBracket > -1)
                 if (posMsgTypeSemicolon > -1)
                     messageType = message.Substring(posOpenSquareBracket + 1, posMsgTypeSemicolon - posOpenSquareBracket - 1);
-         
+
             if (messageType == "sendBin")
             {
 
@@ -197,9 +229,13 @@ namespace WpfApplication1
             }
             if (messageType == "ackLogin")
             {
-                Dispatcher.BeginInvoke(new Action(() => {
-                    listBox1.Items.Add("    Just Received ackLogin ");
-                }));
+                if (processAckLoginMsg(message))
+                {
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        setFormControls(true);
+                    }));
+                }
             }
 
         }

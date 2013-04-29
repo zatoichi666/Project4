@@ -48,6 +48,26 @@ void ListenThread::run()
 
 void Receiver::start(int port)
 {
+
+	sout << "Loading user accounts\n";
+
+	std::string line;
+	
+	std::ifstream xmlFile ("users.xml");
+	std::string infile;
+	if (xmlFile.is_open())
+	{
+		while ( xmlFile.good() )
+		{
+			std::getline(xmlFile,line);
+			infile += line;
+		}
+		xmlFile.close();
+	}
+	
+	XmlReader rdr(infile);
+	ul = AuthXml::readXml(rdr);
+
 	sout << " Receiver: started on port " << port << "\n";
 	pLt = new ListenThread(port, q_);
 	try
@@ -149,10 +169,13 @@ void Receiver::processLoginRequestMessage(std::string message )
 	size_t pWordEntryLength = message.find("'",pospWord) - pospWord;
 	std::string pWord = message.substr(pospWord,pWordEntryLength);
 
+	bool authSuccess = false;
+	user u = ul.getUserByUsername(uName);
 
+	if (u.getAccesslevel() == 0 && u.getPassword() == pWord)
+		authSuccess = true;
 
-
-	if (uName == "admin" && pWord == "password")
+	if (authSuccess == true)
 	{
 		sout << "Authentication successful, " << uName << "\n";
 		std::thread thr([&]() 
@@ -190,7 +213,6 @@ void Receiver::processQueryMd5Msg(std::string message )
 	std::string dPort_s = message.substr(posdPortHeader,dPortEntryLength);
 	int dPort;
 	if ( ! (std::istringstream(dPort_s) >> dPort) ) dPort = 0;
-
 	sout << " queryMD5: " << fileName << " from IP: " << dIp << " port: " << dPort << "\n";
 
 	FileSystem::FileInfo fi(fileName);	
@@ -213,14 +235,11 @@ void Receiver::processQueryMd5Msg(std::string message )
 			fileContents += packet;
 		}
 		std::string fileMd5Value;
-		//sout << " queryMD5: Calculating md5 1000000 times\n";
-
 		std::thread thr([&]() 
 		{
 			std::clock_t start;
 			double duration;
 			start = std::clock();
-			//for (int i=0;i<1000000;i++)		
 			fileMd5Value = md5(fileContents.c_str());			
 			duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
 			sout << " queryMD5: Calculated md5: " << fileMd5Value << " in " << duration << " seconds.\n";
@@ -257,7 +276,6 @@ void Receiver::processAckBinMsg(std::string message )
 
 void Receiver::sendAckBinMsg(std::string fileName, int port, std::string ip )
 {	
-
 
 	std::thread thr([&]() 
 	{

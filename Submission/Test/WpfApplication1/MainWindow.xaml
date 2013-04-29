@@ -19,13 +19,12 @@
         <TextBox x:Name="textBox1" Grid.Row="1" Margin="10" TextWrapping="Wrap" Text="TextBox" />
         <ListBox x:Name="listBox1" Grid.Row="2" Margin="10"/>
         <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="10" HorizontalAlignment="Right">
-            <Button Content="Browse" Width="75" Margin="10" Click="Button_Click_1" />
-            <Button Content="Get Files" Width="75" Margin="10" Click="Button_Click_2"/>
-            <Button x:Name="button3" Content="Post Message" Width="96" Margin="10,10,10,10.2" Click="Button_Click_3"/>
+            <Button x:Name="buttonBrowse" Content="Browse" Width="75" Margin="10" Click="Button_Click_1" />
+            <Button x:Name="buttonGetFiles" Content="Get Files" Width="75" Margin="10" Click="Button_Click_2"/>
+            <Button x:Name="buttonPostMessage" Content="Post Message" Width="96" Margin="10,10,10,10.2" Click="Button_Click_3"/>
         </StackPanel>
-        <Button Content="Get Message" HorizontalAlignment="Left" Height="35" Margin="83,19.6,0,0" Grid.Row="3" VerticalAlignment="Top" Width="90" Click="Button_Click_4"/>
-        <Label x:Name="labelConnected" Content="Connected " FontFamily="Tahoma" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"  Padding="10" Margin="366,5,10.4,5.6" RenderTransformOrigin="1.193,0.847"/>
-        <Label x:Name="labelDisconnected" Content="Disconnected " FontFamily="Tahoma" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"  Padding="10" Margin="366,5,10.4,5.6"/>
+        <Button x:Name="buttonGetMessage" Content="Get Message" HorizontalAlignment="Left" Height="35" Margin="83,19.6,0,0" Grid.Row="3" VerticalAlignment="Top" Width="90" Click="Button_Click_4"/>
         <Label x:Name="label1" Content="Package Client " FontFamily="Tahoma" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"  Padding="10" Margin="0,5,307.4,5.6"/>
+        <Label x:Name="labelConnected" Content="Disconnected" FontFamily="Tahoma" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"  Padding="10" Margin="366,5,10.4,5.6" RenderTransformOrigin="1.193,0.847"/>
     </Grid>
 </Window>

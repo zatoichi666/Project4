@@ -22,11 +22,6 @@
 #include "XmlWriter.h"
 
 
-
-
-
-
-
 #ifdef TEST_AUTHXML
 
 int main()
@@ -36,7 +31,6 @@ int main()
 	std::cout << " Creating a couple new users\n\n";
 
 	userList ulst;
-
 
 	user u1("user1","pass1",1);
 	user u2("user2","pass2",2);
@@ -50,8 +44,6 @@ int main()
 	std::cout << "Finding user2's access level, should be 2: " << ulst.getUserByUsername("user2").getAccesslevel() << "\n";
 
 	AuthXml::writeXml("test.xml",ulst);
-
-
 
 	std::cout << "----------------------------------\n";
 	std::string line;

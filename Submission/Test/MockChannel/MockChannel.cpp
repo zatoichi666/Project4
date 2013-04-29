@@ -128,8 +128,6 @@ public:
 		ListenThread* pListenThread = new ListenThread(8080, *pOutQ);
 		pListenThread->start();
 
-
-
 	}
 	~MockChannel()
 	{
@@ -152,7 +150,10 @@ public:
 	}
 	virtual void postMessage(Message^ msg) override
 	{
+		
 		SendThread* pSendThread = new SendThread(pInQ, sock_, ConvertMsgDown(msg));
+
+		sout << "*** Sending to IP: " << sock_->System().getRemoteIP(sock_) << "\n";			
 
 		if (!sock_->connect("127.0.0.1",8050,false))
 		{
