@@ -76,6 +76,7 @@
     <ClCompile Include="..\FileSystem.cpp" />
     <ClCompile Include="..\IPacketizer.cpp" />
     <ClCompile Include="..\md5.cpp" />
+    <ClCompile Include="..\msgConvert.cpp" />
     <ClCompile Include="..\Packetizer.cpp" />
   </ItemGroup>
   <ItemGroup>

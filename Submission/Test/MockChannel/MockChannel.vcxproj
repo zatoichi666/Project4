@@ -51,8 +51,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;TRACING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>C:\School\CSE-687\Project4\Submission\Test;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -78,6 +79,7 @@
     <ClCompile Include="..\IPacketizer.cpp" />
     <ClCompile Include="..\Locks.cpp" />
     <ClCompile Include="..\md5.cpp" />
+    <ClCompile Include="..\msgConvert.cpp" />
     <ClCompile Include="..\Packetizer.cpp" />
     <ClCompile Include="..\Sockets.cpp" />
     <ClCompile Include="..\Threads.cpp" />

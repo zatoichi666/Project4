@@ -24,12 +24,7 @@ public:
 	{ }
 	void run()
 	{
-
-		TRACE("  SendThread sending: " + msg_ + " to " + pSock_->System().getRemoteIP(pSock_));
-
 		pSock_->writeLine(msg_);
-
-		TRACE("  Successfully wrote the message out");
 	}
 private:	
 	std::string msg_;
@@ -114,7 +109,6 @@ public:
 	virtual Message^ getMessage() override
 	{
 		stdMessage sMsg, qMsg;
-		showQueues(qMsg);
 		sMsg = pOutQ->deQ();
 		return ConvertMsgUp(sMsg);
 	}

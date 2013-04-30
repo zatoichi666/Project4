@@ -13,7 +13,8 @@ int main()
 {
 	String^ s = "RemoteSWRepo.vsd";
 	PacketizerWrapper^ p = gcnew PacketizerWrapper(s);
-	std::cout << p->getFileName();
+	std::cout << ConvertMsgDown(p->getFileName());
+	std::cout << ConvertMsgDown(p->operator[](5));
 
 	return 0;	
 }

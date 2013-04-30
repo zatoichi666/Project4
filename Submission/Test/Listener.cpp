@@ -20,7 +20,7 @@
 #include "Sender.h"
 #include "md5.h"
 
-#define TRACING
+//#define TRACING
 
 void ClientHandlerThread::run()
 {

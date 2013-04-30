@@ -21,7 +21,9 @@ namespace iPacketizer{
 	public:
 		PacketizerWrapper(String^ filename) { p = new Packetizer( ConvertMsgDown(filename)); }
 		~PacketizerWrapper() { delete p; }
-		std::string getFileName() { return p->getFileName(); }
+		String^ getFileName() { return ConvertMsgUp(p->getFileName()); }
+		String^ operator[](size_t index) { return ConvertMsgUp(p->operator[](index)); }
+		int size() { return p->size(); }
 	};
 
 

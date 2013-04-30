@@ -31,6 +31,9 @@ using System.Threading;
 
 namespace WpfApplication1
 {
+
+
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -41,8 +44,8 @@ namespace WpfApplication1
         String password;
 
         private mockChannel.IChannel chan;
-        
-        
+
+
         private Action<string> myItemDelegate;
 
         public MainWindow(String srvIP, String uName, String pWord)
@@ -58,7 +61,7 @@ namespace WpfApplication1
         private void AddItem(string item)
         {
             string msg = "Received Message: " + item;
-            listBox1.Items.Add(msg);
+            ListBoxSessionOutput.Items.Add(msg);
         }
 
         private String MakeQueryMd5AckMessage(string filename, string ipSender, int portSender)
@@ -69,7 +72,20 @@ namespace WpfApplication1
             header += "ipSender='" + ipSender + "'";
             header += "portSender='" + (portSender).ToString() + "'";
             header += "]";
+            return header;
+        }
 
+        private String MakeSendBinMessage(iPacketizer.PacketizerWrapper p, String destIp, int destPort, uint packetIndex)
+        {
+            String header;
+            header = "[sendBin;";
+            header += "file='" + p.getFileName() + "'";
+            header += "pCount='" + p.size().ToString() + "'";
+            header += "pInd='" + packetIndex.ToString() + "'";
+            header += "dIp='" + destIp + "'";
+            header += "dPort='" + destPort.ToString() + "'";
+            header += "]";
+            header += p.op_Subscript(packetIndex);
             return header;
         }
 
@@ -109,9 +125,8 @@ namespace WpfApplication1
             buttonPostMessage.IsEnabled = ctrl;
             buttonBrowse.IsEnabled = ctrl;
             buttonGetFiles.IsEnabled = ctrl;
-            buttonGetMessage.IsEnabled = ctrl;
-            textBox1.IsEnabled = ctrl;
-            listBox1.IsEnabled = ctrl;
+            textBoxDirectory.IsEnabled = ctrl;
+            listBoxLocalFiles.IsEnabled = ctrl;
             if (ctrl == true)
                 labelConnected.Content = "Connected";
             else
@@ -121,10 +136,14 @@ namespace WpfApplication1
         private void Window_Loaded_1(object sender, RoutedEventArgs e)
         {
             myItemDelegate = this.AddItem;
-            textBox1.Text = Directory.GetCurrentDirectory();
-            string[] files = Directory.GetFiles(textBox1.Text, "*.*");
+            textBoxDirectory.Text = Directory.GetCurrentDirectory();
+            string[] files = Directory.GetFiles(textBoxDirectory.Text, "*.*");
             foreach (string file in files)
-                listBox1.Items.Add(System.IO.Path.GetFileName(file));
+                listBoxLocalFiles.Items.Add(System.IO.Path.GetFileName(file));
+
+            string[] dirs = Directory.GetDirectories(textBoxDirectory.Text, "*.*");
+            foreach (string dir in dirs)
+                listBoxLocalFiles.Items.Add(System.IO.Path.GetFileName(dir) + "/");
 
             setFormControls(false);
 
@@ -140,55 +159,68 @@ namespace WpfApplication1
         {
             FolderBrowserDialog fbd = new FolderBrowserDialog();
             fbd.ShowNewFolderButton = false;
-            fbd.SelectedPath = textBox1.Text;
+            fbd.SelectedPath = textBoxDirectory.Text;
             DialogResult result = fbd.ShowDialog();
             if (result == System.Windows.Forms.DialogResult.OK)
             {
                 Directory.SetCurrentDirectory(fbd.SelectedPath);
-                textBox1.Text = fbd.SelectedPath;
-                listBox1.Items.Clear();
-                string[] files = Directory.GetFiles(textBox1.Text, "*.*");
+                textBoxDirectory.Text = fbd.SelectedPath;
+                listBoxLocalFiles.Items.Clear();
+                string[] files = Directory.GetFiles(textBoxDirectory.Text, "*.*");
                 foreach (string file in files)
-                    listBox1.Items.Add(System.IO.Path.GetFileName(file));
+                    listBoxLocalFiles.Items.Add(System.IO.Path.GetFileName(file));
+
+                string[] dirs = Directory.GetDirectories(textBoxDirectory.Text, "*.*");
+                foreach (string dir in dirs)
+                    listBoxLocalFiles.Items.Add(System.IO.Path.GetFileName(dir) + "\\");
+
+
             }
         }
 
         private void Button_Click_2(object sender, RoutedEventArgs e)
         {
             OpenFileDialog ofd = new OpenFileDialog();
-            ofd.InitialDirectory = textBox1.Text;
+            ofd.InitialDirectory = textBoxDirectory.Text;
             ofd.Multiselect = true;
             System.Windows.Forms.DialogResult result = ofd.ShowDialog();
             if (result == System.Windows.Forms.DialogResult.OK)
             {
-                listBox1.Items.Clear();
+                listBoxLocalFiles.Items.Clear();
                 string[] files = ofd.FileNames;
                 foreach (string file in files)
-                    listBox1.Items.Add(System.IO.Path.GetFileName(file));
+                    listBoxLocalFiles.Items.Add(System.IO.Path.GetFileName(file));
             }
             buttonPostMessage.IsEnabled = true;
         }
 
         private void Button_Click_3(object sender, RoutedEventArgs e)
         {
-            int size = listBox1.Items.Count;
+            int size = ListBoxPending.Items.Count;
             for (int i = 0; i < size; ++i)
             {
-                string item = listBox1.Items[i] as string;
+                string item = ListBoxPending.Items[i] as string;
+                sendBinFileToRemoteServer(item);
 
-                iPacketizer.PacketizerWrapper pack = new iPacketizer.PacketizerWrapper(item);
-                
-
-                chan.postMessage(item);
-                listBox1.Items.Add("    Posted Message: " + item);
+                ListBoxSessionOutput.Items.Add("    Posted Message: " + item);
             }
             buttonPostMessage.IsEnabled = false;
         }
 
-        private void Button_Click_4(object sender, RoutedEventArgs e)
+        private void sendBinFileToRemoteServer(string filename)
         {
-            string msg = MakeLoginRequestMessage();
-            chan.postMessage(msg);
+            iPacketizer.PacketizerWrapper pack = new iPacketizer.PacketizerWrapper(filename);
+
+
+
+
+            for (uint i = 0; i < pack.size(); i++)
+            {
+                chan.postMessage(MakeSendBinMessage(pack, "127.0.0.1", 8050, i));
+            }
+
+            //ListBoxSessionOutput.Items.Add("Successfully uploaded " + filename);
+            
         }
 
         private Boolean processAckLoginMsg(string message)
@@ -214,7 +246,7 @@ namespace WpfApplication1
 
             if (messageType == "sendBin")
             {
-                
+
             }
             if (messageType == "queryMd5")
             {
@@ -245,5 +277,33 @@ namespace WpfApplication1
 
         }
 
+        private void ButtonRemoveFromPending_Click(object sender, RoutedEventArgs e)
+        {
+            ListBoxPending.Items.Remove(ListBoxPending.SelectedItem);
+        }
+
+
+
+        private void ButtonAddToPending_Click(object sender, RoutedEventArgs e)
+        {
+            String fileToAdd;
+            fileToAdd = textBoxDirectory.Text + "\\" + listBoxLocalFiles.SelectedItem.ToString();
+            ListBoxPending.Items.Add(fileToAdd);
+        }
+
+        private void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+
+        private void listBoxLocalFiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+
+        
+
+
+        
     }
 }
