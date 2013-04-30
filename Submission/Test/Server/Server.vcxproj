@@ -45,6 +45,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_MBCS;TEST_CHANNEL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\School\CSE-687\Project4\Submission\Test\packageDep\test;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -76,6 +77,18 @@
     <ClCompile Include="..\Listener.cpp" />
     <ClCompile Include="..\Locks.cpp" />
     <ClCompile Include="..\md5.cpp" />
+    <ClCompile Include="..\packageDep\test\ActionsAndRules.cpp" />
+    <ClCompile Include="..\packageDep\test\ConfigureParser.cpp" />
+    <ClCompile Include="..\packageDep\test\Executive.cpp" />
+    <ClCompile Include="..\packageDep\test\FoldingRules.cpp" />
+    <ClCompile Include="..\packageDep\test\Graph.cpp" />
+    <ClCompile Include="..\packageDep\test\GraphSingleton.cpp" />
+    <ClCompile Include="..\packageDep\test\GraphXml.cpp" />
+    <ClCompile Include="..\packageDep\test\Parser.cpp" />
+    <ClCompile Include="..\packageDep\test\ScopeStack.cpp" />
+    <ClCompile Include="..\packageDep\test\SemiExpression.cpp" />
+    <ClCompile Include="..\packageDep\test\Tokenizer.cpp" />
+    <ClCompile Include="..\packageDep\test\Utility.cpp" />
     <ClCompile Include="..\Packetizer.cpp" />
     <ClCompile Include="..\Sender.cpp" />
     <ClCompile Include="..\Sockets.cpp" />
@@ -93,6 +106,19 @@
     <ClInclude Include="..\Listener.h" />
     <ClInclude Include="..\Locks.h" />
     <ClInclude Include="..\md5.h" />
+    <ClInclude Include="..\packageDep\test\ActionsAndRules.h" />
+    <ClInclude Include="..\packageDep\test\ConfigureParser.h" />
+    <ClInclude Include="..\packageDep\test\FoldingRules.h" />
+    <ClInclude Include="..\packageDep\test\Graph.h" />
+    <ClInclude Include="..\packageDep\test\GraphSingleton.h" />
+    <ClInclude Include="..\packageDep\test\GraphXml.h" />
+    <ClInclude Include="..\packageDep\test\itokcollection.h" />
+    <ClInclude Include="..\packageDep\test\Parser.h" />
+    <ClInclude Include="..\packageDep\test\ScopeStack.h" />
+    <ClInclude Include="..\packageDep\test\SemiExpression.h" />
+    <ClInclude Include="..\packageDep\test\SymbolTable.h" />
+    <ClInclude Include="..\packageDep\test\Tokenizer.h" />
+    <ClInclude Include="..\packageDep\test\Utility.h" />
     <ClInclude Include="..\Packetizer.h" />
     <ClInclude Include="..\Sender.h" />
     <ClInclude Include="..\Sockets.h" />

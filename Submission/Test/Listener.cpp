@@ -20,6 +20,19 @@
 #include "Sender.h"
 #include "md5.h"
 
+//For dependency scanner
+#include "Tokenizer.h"
+#include "SemiExpression.h"
+#include "Parser.h"
+#include "ActionsAndRules.h"
+#include "ConfigureParser.h"
+#include "FoldingRules.h"
+#include "filefind.h"
+#include "FileSystem.h"
+#include "GraphXml.h"
+
+typedef GraphXml<node, std::string> graphXml;
+
 //#define TRACING
 
 void ClientHandlerThread::run()
@@ -52,7 +65,7 @@ void Receiver::start(int port)
 	sout << "Loading user accounts\n";
 
 	std::string line;
-	
+
 	std::ifstream xmlFile ("users.xml");
 	std::string infile;
 	if (xmlFile.is_open())
@@ -64,7 +77,7 @@ void Receiver::start(int port)
 		}
 		xmlFile.close();
 	}
-	
+
 	XmlReader rdr(infile);
 	ul = AuthXml::readXml(rdr);
 
@@ -134,6 +147,18 @@ void Receiver::processMessage(std::string message)
 		int isLastPacket = 0;
 		processLoginRequestMessage( message );
 	}
+	if (messageType == "newCheckin")
+	{
+		int isLastPacket = 0;
+		processNewCheckin( message );
+	}
+
+	if (messageType == "checkinRequest")
+	{
+		int isLastPacket = 0;
+		processCheckinRequestMsg( message );
+	}
+
 
 }
 
@@ -195,7 +220,6 @@ void Receiver::processLoginRequestMessage(std::string message )
 		});
 		thr.join();
 	}
-
 }
 
 void Receiver::processQueryMd5Msg(std::string message )
@@ -203,11 +227,9 @@ void Receiver::processQueryMd5Msg(std::string message )
 	size_t posFileHeader = message.find("file='") + 6;
 	size_t fileEntryLength = message.find("'",posFileHeader) - posFileHeader;
 	std::string fileName = message.substr(posFileHeader,fileEntryLength);
-
 	size_t posdIpHeader = message.find("ipSender='") + 10;
 	size_t dIpEntryLength = message.find("'",posdIpHeader) - posdIpHeader;
 	std::string dIp = message.substr(posdIpHeader,dIpEntryLength);
-
 	size_t posdPortHeader = message.find("portSender='") + 12;
 	size_t dPortEntryLength = message.find("'",posdPortHeader) - posdPortHeader;
 	std::string dPort_s = message.substr(posdPortHeader,dPortEntryLength);
@@ -249,6 +271,93 @@ void Receiver::processQueryMd5Msg(std::string message )
 		thr.join();
 }
 
+
+
+void Receiver::processCheckinRequestMsg(std::string message)
+{
+	sout << "\n Got a checkin request.  Pending checkin has " << pC->size() << " files in it\n";
+	scanPendingCheckinForDependencies();
+	GraphSingleton *s;
+	s = GraphSingleton::getInstance();
+	graph g;
+	g = s->getGraph();
+	graphXml::printPrettyGraph(g);
+	std::vector<std::string> missingPackages = getListOfMissingPackagesFromPendingCheckin();
+
+	std::string payload = Messager::makeCheckinMissingPackageMessage(missingPackages,"127.0.0.1",8050);
+
+	std::thread thr([&]() 
+	{
+		TextTalker ta;
+		ta.start(missingPack, "127.0.0.1", 8080, payload, "127.0.0.1", 8050 );
+	});
+	thr.join();
+
+
+
+}
+
+/* ----------< Find packages in the graph that aren't in the pending checkin >---------------- */
+
+std::vector<std::string> Receiver::getListOfMissingPackagesFromPendingCheckin()
+{
+	std::vector<std::string> presentFiles, difference_vec;
+	GraphSingleton *s;
+	s = GraphSingleton::getInstance();
+	graph g = s->getGraph();
+	graph::iterator iter = g.begin();
+	while(iter != g.end())
+	{
+		vertex v = *iter;
+		std::string parent;
+		parent = v.value().payload;
+		bool foundParent = false;
+		for (size_t i=0;i<presentFiles.size();i++)
+		{
+			if (presentFiles[i] == parent)
+				foundParent = true;
+		}
+		if (foundParent == false)
+			presentFiles.push_back(parent);
+		++iter;
+	}
+	iter = g.begin();
+	std::vector<std::string> pendingCheckinCrunched;
+	for (size_t i=0;i<pC->size();i++)
+	{
+		bool found = false;
+		for (size_t j=0;j<pendingCheckinCrunched.size();j++)
+		{
+			if (pendingCheckinCrunched[j] == pC->operator[](i).substr(0,pC->operator[](i).find(".")))
+				found = true;
+		}
+		if (found == false)
+			pendingCheckinCrunched.push_back( pC->operator[](i).substr(0,pC->operator[](i).find(".")) );
+	}
+
+	for (size_t i=0;i<presentFiles.size();i++)
+	{
+		bool found = false;
+		for (size_t j=0;j<pendingCheckinCrunched.size();j++)
+		{
+			if (presentFiles[i] == pendingCheckinCrunched[j])
+				found = true;
+		}
+		if (found == false)
+			difference_vec.push_back(presentFiles[i]);
+	}	
+	return difference_vec;
+}
+
+void Receiver::processNewCheckin(std::string message)
+{
+
+	size_t posFileHeader = message.find("checkinName='") + 13;
+	size_t fileEntryLength = message.find("'",posFileHeader) - posFileHeader;
+	std::string packName = message.substr(posFileHeader,fileEntryLength);
+	sout << "\n Starting new checkin named " << packName << "\n";
+	pC = new PendingCheckin;
+}
 void Receiver::processAckBinMsg(std::string message )
 {	
 	/* ------------------------< Unpack the ackBin message >---------------------------------- */
@@ -282,6 +391,47 @@ void Receiver::sendAckBinMsg(std::string fileName, int port, std::string ip )
 		ta.start(ackBin, ip, port, fileName, ip, port );
 	});
 	thr.join();
+}
+
+void Receiver::scanPendingCheckinForDependencies()
+{
+	ConfigParseToConsole configure;
+	Parser* pParser;
+	pParser = configure.Build();
+
+	for(std::vector<std::string>::iterator iterTxt = pC->begin();
+		iterTxt != pC->end();
+		++iterTxt)
+	{
+		try
+		{
+			if(pParser)
+			{
+				if(!configure.Attach(*iterTxt))
+				{
+					std::cout << "\n  could not open file " << *iterTxt << std::endl;
+					continue;
+				}
+			}
+			else
+			{
+				std::cout << "\n\n  Parser not built\n\n";
+
+			}
+			std::cout << "\n Pass 1: Parsing file: " << *iterTxt << "\n";
+
+			GraphSingleton *s;
+			s = GraphSingleton::getInstance();
+			s->setCurrentFilename(*iterTxt);
+
+			while(pParser->next())
+				pParser->parse();
+		}
+		catch(std::exception& ex)
+		{
+			std::cout << "\n\n    " << ex.what() << "\n\n";
+		}
+	}
 }
 
 //----< process the SendBin Message >--------------------------------------
@@ -320,17 +470,21 @@ FileSystem::FileInfo Receiver::processSendBinMsg(std::string message, int& isLas
 	else
 		outFile.open(FileSystem::File::append, FileSystem::File::binary);
 
+	FileSystem::FileInfo fi(fileName);
 	if(outFile.isGood())
 		outFile.putBlock(b);
 	if (pInd == pCount - 1)
 	{
 		isLastPacket = 1;
+		pC->push_back(fileName);
+
 		outFile.close();
 		sendAckBinMsg(fileName, dPort, dIp);
 	}
 	else
+	{
 		isLastPacket = 0;
-	FileSystem::FileInfo fi(fileName);
+	}
 	return fi;
 }
 

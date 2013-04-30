@@ -30,7 +30,7 @@
 #include "AuthenticateXml.h"
 
 //std::string ToString(int i);
-
+typedef std::vector<std::string> PendingCheckin;
 
 ///////////////////////////////////////////////////
 // ClientHandlerThread thread
@@ -70,9 +70,14 @@ public:
 private:
 
 	userList ul;
+	PendingCheckin* pC;
 	BlockingQueue<std::string> q_;
 	ListenThread* pLt;
 	void processMessage(std::string message);
+	std::vector<std::string> Receiver::getListOfMissingPackagesFromPendingCheckin();
+	void Receiver::scanPendingCheckinForDependencies();
+	void Receiver::processCheckinRequestMsg(std::string message);
+	void Receiver::processNewCheckin(std::string message); 
 	void Receiver::sendAckBinMsg(std::string fileName, int port, std::string ip );
 	void Receiver::processAckBinMsg(std::string message );
 	void Receiver::processLoginRequestMessage(std::string message );

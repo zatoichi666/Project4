@@ -86,16 +86,19 @@ void TextTalker::start(messageType_e msgType, std::string ip, int port, std::str
 	doLog("starting TextTalker");
 
 	if (msgType == queryMd5)
-		_q.enQ(makeQueryMd5AckMessage(payload, listenIp, listenPort ));
+		_q.enQ(Messager::makeQueryMd5AckMessage(payload, listenIp, listenPort ));
 
 	if (msgType == ackMd5)
-		_q.enQ(makeMd5AckMessage(payload, listenIp, listenPort ));
+		_q.enQ(Messager::makeMd5AckMessage(payload, listenIp, listenPort ));
 
 	if (msgType == ackBin)
-		_q.enQ(makeAckBinMessage(payload, ip, port ));
+		_q.enQ(Messager::makeAckBinMessage(payload, ip, port ));
 
 	if (msgType == ackLogin)
-		_q.enQ(makeAckLoginMessage(payload, ip, port ));
+		_q.enQ(Messager::makeAckLoginMessage(payload, ip, port ));
+
+	if (msgType == missingPack)
+		_q.enQ(payload);
 
 	_q.enQ("stop");
 
@@ -105,7 +108,7 @@ void TextTalker::start(messageType_e msgType, std::string ip, int port, std::str
 
 //----< Text-based message for querying a remote file's MD5 signature >----------------------
 
-std::string TextTalker::makeQueryMd5AckMessage(std::string filename, std::string ipSender, int portSender)
+std::string Messager::makeQueryMd5AckMessage(std::string filename, std::string ipSender, int portSender)
 {
 	std::string header;
 
@@ -121,7 +124,7 @@ std::string TextTalker::makeQueryMd5AckMessage(std::string filename, std::string
 //----------< Text-based message for servicing a query >------------------------------------- 
 //----------< calculates MD5 and sends the result back to the queryer >----------------------
 
-std::string TextTalker::makeMd5AckMessage(std::string md5val, std::string ipSender, int portSender)
+std::string Messager::makeMd5AckMessage(std::string md5val, std::string ipSender, int portSender)
 {
 	std::string header;
 
@@ -136,7 +139,7 @@ std::string TextTalker::makeMd5AckMessage(std::string md5val, std::string ipSend
 
 //----------< Text-based message for confirming login >------------------------------------- 
 
-std::string TextTalker::makeAckLoginMessage(std::string result, std::string ipSender, int portSender)
+std::string Messager::makeAckLoginMessage(std::string result, std::string ipSender, int portSender)
 {
 	std::string header;
 	header = "[ackLogin;";
@@ -151,7 +154,7 @@ std::string TextTalker::makeAckLoginMessage(std::string result, std::string ipSe
 //----------< Text-based message for confirming receipt of a complete binary file >------------------------------------- 
 //----------< Doesn't calculate MD5, that is a separate optional transaction via queryMD5 >----------------------
 
-std::string TextTalker::makeAckBinMessage(std::string fileName, std::string ipSender, int portSender)
+std::string Messager::makeAckBinMessage(std::string fileName, std::string ipSender, int portSender)
 {
 	std::string header;
 	header = "[ackBin;";
@@ -162,6 +165,30 @@ std::string TextTalker::makeAckBinMessage(std::string fileName, std::string ipSe
 
 	return header;
 }
+
+std::string Messager::makeCheckinMissingPackageMessage(std::vector<std::string> missingPackages, std::string ipSender, int portSender)
+{
+	std::string header;
+	header = "[missingPack;";
+	header += "count='" + ToString(missingPackages.size()) + "'";
+	if (missingPackages.size() > 0)
+	{
+		header += "list='{";
+		for (size_t i=0;i<missingPackages.size();i++)
+		{
+			if (i < missingPackages.size() - 1)
+				header += missingPackages[i] + ",";
+			else
+				header += missingPackages[i];
+		}
+		header += "}'";
+	}
+	header+="ipSender='" + ipSender + "'";
+	header+="portSender='" + ToString(portSender) + "'";	
+	header += "]";
+	return header;
+}
+
 
 int TextTalker::id() { return myCount; }
 

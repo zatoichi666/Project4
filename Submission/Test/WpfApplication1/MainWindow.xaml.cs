@@ -75,6 +75,23 @@ namespace WpfApplication1
             return header;
         }
 
+        private String MakeNewCheckinMessage(String checkinName)
+        {
+            String header;
+            header = "[newCheckin;";
+            header += "checkinName='" + checkinName + "'";
+            header += "]";
+            return header;
+        }
+
+        private String MakeCheckinRequestMessage()
+        {
+            String header;
+            header = "[checkinRequest;";
+            header += "]";
+            return header;
+        }
+
         private String MakeSendBinMessage(iPacketizer.PacketizerWrapper p, String destIp, int destPort, uint packetIndex)
         {
             String header;
@@ -109,6 +126,9 @@ namespace WpfApplication1
 
 
             string msg = MakeLoginRequestMessage();
+            chan.postMessage(msg);
+
+            msg = MakeNewCheckinMessage("new");
             chan.postMessage(msg);
 
             while (true)
@@ -196,23 +216,13 @@ namespace WpfApplication1
 
         private void Button_Click_3(object sender, RoutedEventArgs e)
         {
-            int size = ListBoxPending.Items.Count;
-            for (int i = 0; i < size; ++i)
-            {
-                string item = ListBoxPending.Items[i] as string;
-                sendBinFileToRemoteServer(item);
-
-                ListBoxSessionOutput.Items.Add("    Posted Message: " + item);
-            }
-            buttonPostMessage.IsEnabled = false;
+            String msg = MakeCheckinRequestMessage();
+            chan.postMessage(msg);
         }
 
         private void sendBinFileToRemoteServer(string filename)
         {
             iPacketizer.PacketizerWrapper pack = new iPacketizer.PacketizerWrapper(filename);
-
-
-
 
             for (uint i = 0; i < pack.size(); i++)
             {
@@ -220,8 +230,17 @@ namespace WpfApplication1
             }
 
             //ListBoxSessionOutput.Items.Add("Successfully uploaded " + filename);
-            
+
         }
+
+        private void processMissingPackMsg(string message)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                ListBoxSessionOutput.Items.Add("Got Missing Package Message");
+            }));
+        }
+
 
         private Boolean processAckLoginMsg(string message)
         {
@@ -244,26 +263,11 @@ namespace WpfApplication1
                 if (posMsgTypeSemicolon > -1)
                     messageType = message.Substring(posOpenSquareBracket + 1, posMsgTypeSemicolon - posOpenSquareBracket - 1);
 
-            if (messageType == "sendBin")
+            if (messageType == "missingPack")
             {
-
+                processMissingPackMsg(message);
             }
-            if (messageType == "queryMd5")
-            {
 
-            }
-            if (messageType == "ackMd5")
-            {
-
-            }
-            if (messageType == "ackBin")
-            {
-
-            }
-            if (messageType == "loginReqMsg")
-            {
-
-            }
             if (messageType == "ackLogin")
             {
                 if (processAckLoginMsg(message))
@@ -286,9 +290,15 @@ namespace WpfApplication1
 
         private void ButtonAddToPending_Click(object sender, RoutedEventArgs e)
         {
-            String fileToAdd;
-            fileToAdd = textBoxDirectory.Text + "\\" + listBoxLocalFiles.SelectedItem.ToString();
-            ListBoxPending.Items.Add(fileToAdd);
+            String fileToAdd;                 
+
+            for (int i = 0; i < listBoxLocalFiles.SelectedItems.Count; i++)
+            {
+                fileToAdd = textBoxDirectory.Text + "\\" + listBoxLocalFiles.SelectedItems[i].ToString();
+                sendBinFileToRemoteServer(fileToAdd);
+                ListBoxPending.Items.Add(fileToAdd);
+            }
+    
         }
 
         private void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -301,9 +311,9 @@ namespace WpfApplication1
 
         }
 
-        
 
 
-        
+
+
     }
 }

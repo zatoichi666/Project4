@@ -31,7 +31,8 @@ typedef enum messageType_e
 	queryMd5,
 	ackMd5,
 	ackBin,
-	ackLogin
+	ackLogin, 
+	missingPack
 };
 
 typedef enum HealthType_e
@@ -57,6 +58,17 @@ private:
 
 };
 
+
+struct Messager
+{
+	static std::string makeQueryMd5AckMessage(std::string filename, std::string listenIp, int listenPort);
+	static std::string makeMd5AckMessage(std::string md5val, std::string ipSender, int portSender);
+	static std::string makeAckLoginMessage(std::string result, std::string ipSender, int portSender);
+	static std::string makeAckBinMessage(std::string filename, std::string listenIp, int listenPort);
+	static std::string makeCheckinMissingPackageMessage(std::vector<std::string> missingPackages, std::string listenIp, int listenPort);
+};
+
+
 class TextTalker
 {
 public:
@@ -65,10 +77,7 @@ public:
 	void start(messageType_e msgType, std::string ip, int port, std::string filename, std::string listenIp, int listenPort);
 	
 private:
-	std::string makeQueryMd5AckMessage(std::string filename, std::string listenIp, int listenPort);
-	std::string makeMd5AckMessage(std::string md5val, std::string ipSender, int portSender);
-	std::string makeAckLoginMessage(std::string result, std::string ipSender, int portSender);
-	std::string makeAckBinMessage(std::string filename, std::string listenIp, int listenPort);
+
 	Socket _s;
 	BlockingQueue<std::string> _q;
 	SenderThread* pSender;

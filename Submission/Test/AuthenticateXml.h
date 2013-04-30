@@ -57,7 +57,7 @@ struct user
 
 };
 
-typedef struct std::vector<user> uList_s;
+typedef std::vector<user> uList_s;
 
 class userList
 {

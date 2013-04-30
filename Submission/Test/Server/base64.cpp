@@ -29,4 +29,24 @@ René Nyffenegger rene.nyffenegger@adp-gmbh.ch
 #include "base64.h"
 #include <iostream>
 
-const s
+const std::string base64::base64_chars = 
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	"abcdefghijklmnopqrstuvwxyz"
+	"0123456789+/";
+
+
+#ifdef TEST_BASE64
+
+int main() {
+	const std::string s = "ADP GmbH\nAnalyse Design & Programmierung\nGesellschaft mit beschränkter Haftung" ;
+
+	std::string encoded = base64::base64_encode(reinterpret_cast<const unsigned char*>(s.c_str()), s.length());
+	std::string decoded = base64::base64_decode(encoded);
+
+	std::cout << "encoded: " << encoded << " string length " << encoded.size() << std::endl;
+	std::cout << "decoded: " << decoded << " string length " << decoded.size() << std::endl;
+
+	return 0;
+}
+
+#endif

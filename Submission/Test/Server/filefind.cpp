@@ -52,33 +52,7 @@ void findFile_r(std::vector<std::string> &refvecFiles,
 
 	if (dirList.size() > 2)
 	{	
-		for(size_ndl;
-	std::cout << "    |       test2.h          " << std::endl;
-	std::cout << "    |                        " << std::endl;
-	std::cout << "    L---test3                " << std::endl;
-	std::cout << "        L---test4            " << std::endl;
-	std::cout << "            |   test7.cpp    " << std::endl;
-	std::cout << "            |                " << std::endl;
-	std::cout << "            L---test5        " << std::endl;
-	std::cout << "                    test5.h  " << std::endl;
-	std::cout << "                    test8.cpp" << std::endl << std::endl;
-	*/
-}
-
-int main()
-{
-	//int iRC = 0;
-	std::vector<std::string> vecTxtFiles;
-	Directory dir;
-	printTestFolderContents();
-	std::string path = Directory::getCurrentDirectory() + "\\test";
-	dir.setCurrentDirectory(path);
-	std::cout << "Starting in "<< path << " and running recursively." << std::endl;
-	findFile_r(vecTxtFiles, dir, true, getFileExtensionList() );
-
-	for(std::vector<std::string>::iterator iterTxt = vecTxtFiles.begin();
-		iterTxt != vecTxtFiles.end();
-		+t i=2; i<dirList.size(); ++i)
+		for(size_t i=2; i<dirList.size(); ++i)
 		{			
 			if (i == 2)
 			{
@@ -118,7 +92,33 @@ void printTestFolderContents()
 	std::cout << "|   test5.cpp                " << std::endl;
 	std::cout << "|                            " << std::endl;
 	std::cout << "L---test1                    " << std::endl;
-	std::cout << "    |---test2                " << std::e+iterTxt)
+	std::cout << "    |---test2                " << std::endl;
+	std::cout << "    |       test2.h          " << std::endl;
+	std::cout << "    |                        " << std::endl;
+	std::cout << "    L---test3                " << std::endl;
+	std::cout << "        L---test4            " << std::endl;
+	std::cout << "            |   test7.cpp    " << std::endl;
+	std::cout << "            |                " << std::endl;
+	std::cout << "            L---test5        " << std::endl;
+	std::cout << "                    test5.h  " << std::endl;
+	std::cout << "                    test8.cpp" << std::endl << std::endl;
+	*/
+}
+
+int main()
+{
+	//int iRC = 0;
+	std::vector<std::string> vecTxtFiles;
+	Directory dir;
+	printTestFolderContents();
+	std::string path = Directory::getCurrentDirectory() + "\\test";
+	dir.setCurrentDirectory(path);
+	std::cout << "Starting in "<< path << " and running recursively." << std::endl;
+	findFile_r(vecTxtFiles, dir, true, getFileExtensionList() );
+
+	for(std::vector<std::string>::iterator iterTxt = vecTxtFiles.begin();
+		iterTxt != vecTxtFiles.end();
+		++iterTxt)
 		std::cout << *iterTxt << std::endl;
 
 	std::vector<std::string> vecTxtFilesNonR;

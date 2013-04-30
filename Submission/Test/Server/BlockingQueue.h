@@ -39,7 +39,7 @@
 
 #include <queue>
 #include <Windows.h>
-#include "locks.h"
+#include "Locks.h"
 
 ///////////////////////////////////////////////////////////////
 // BlockingQueue<Msg>
