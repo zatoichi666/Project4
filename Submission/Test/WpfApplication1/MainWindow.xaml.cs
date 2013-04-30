@@ -41,7 +41,8 @@ namespace WpfApplication1
         String password;
 
         private mockChannel.IChannel chan;
-
+        
+        
         private Action<string> myItemDelegate;
 
         public MainWindow(String srvIP, String uName, String pWord)
@@ -174,6 +175,10 @@ namespace WpfApplication1
             for (int i = 0; i < size; ++i)
             {
                 string item = listBox1.Items[i] as string;
+
+                iPacketizer.PacketizerWrapper pack = new iPacketizer.PacketizerWrapper(item);
+                
+
                 chan.postMessage(item);
                 listBox1.Items.Add("    Posted Message: " + item);
             }
@@ -209,7 +214,7 @@ namespace WpfApplication1
 
             if (messageType == "sendBin")
             {
-
+                
             }
             if (messageType == "queryMd5")
             {

@@ -12,12 +12,10 @@
 
 #include <iostream>
 #include "Packetizer.h"
-#include "filefind.h"
-#include "FileSystem.h"
-#include "base64.h"
-#include "md5.h"
+
 
 using namespace FileSystem;
+
 
 std::string Packetizer::getFileName()
 {

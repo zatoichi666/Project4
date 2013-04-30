@@ -18,9 +18,10 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-
-//#include "base64.h"
-
+#include "filefind.h"
+#include "FileSystem.h"
+#include "base64.h"
+#include "md5.h"
 
 #define CHUNK_SIZE 1024
 

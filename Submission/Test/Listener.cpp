@@ -276,14 +276,12 @@ void Receiver::processAckBinMsg(std::string message )
 
 void Receiver::sendAckBinMsg(std::string fileName, int port, std::string ip )
 {	
-
 	std::thread thr([&]() 
 	{
 		TextTalker ta;
 		ta.start(ackBin, ip, port, fileName, ip, port );
 	});
 	thr.join();
-
 }
 
 //----< process the SendBin Message >--------------------------------------

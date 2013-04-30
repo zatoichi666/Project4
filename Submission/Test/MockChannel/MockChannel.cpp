@@ -4,39 +4,13 @@
 // Jim Fawcett, CSE687 - Object Oriented Design, Spring 2013         //
 ///////////////////////////////////////////////////////////////////////
 
-#include "Sockets.h"
+
 #include "MockChannel.h"
-#include "BlockingQueue.h"
-#include "Threads.h"
-#include "locks.h"
-//#include "Sender.h"
-
-#include <string>
-#include <iostream>
-
 
 using namespace mockChannel;
 
 /////////////////////////////////////////////////////////////////////////
 // Helper message converters
-
-typedef std::string stdMessage;
-
-stdMessage ConvertMsgDown(Message^ msg)
-{
-	stdMessage smsg;
-	for(int i=0; i<msg->Length; ++i)
-		smsg += (int)msg[i];
-	return smsg;
-}
-
-Message^ ConvertMsgUp(const stdMessage& smsg)
-{
-	Message^ msg;
-	for(size_t i=0; i<smsg.size(); ++i)
-		msg += (wchar_t)smsg[i];
-	return msg;
-}
 
 typedef BlockingQueue<stdMessage> BQueue;
 
@@ -98,17 +72,14 @@ public:
 	void stop(bool end) { stop_ = end; }
 
 private:
-
 	void run()
 	{
 		while(!stop_)
 		{
-
 			SOCKET s = listener_.waitForConnect();
 			TRACE("  Trying to create a ClientHandlerThread");			
 			ClientHandlerThread* pCh = new ClientHandlerThread(s, q_);
 			pCh->start();
-
 		}
 
 	}
@@ -123,7 +94,7 @@ private:
 ref class MockChannel : public IChannel
 {
 public:
-	MockChannel() : pInQ(new BlockingQueue<std::string>), pOutQ(new BlockingQueue<std::string>), sock_(new Socket)
+	MockChannel() : pInQ(new BlockingQueue<std::string>), pOutQ(new BlockingQueue<std::string>)
 	{
 		ListenThread* pListenThread = new ListenThread(8080, *pOutQ);
 		pListenThread->start();
@@ -133,7 +104,6 @@ public:
 	{
 		delete pInQ;
 		delete pOutQ;
-		delete sock_;
 	}
 
 	virtual void shutDown() override
@@ -150,10 +120,8 @@ public:
 	}
 	virtual void postMessage(Message^ msg) override
 	{
-		
+		Socket* sock_ = new Socket;;
 		SendThread* pSendThread = new SendThread(pInQ, sock_, ConvertMsgDown(msg));
-
-		sout << "*** Sending to IP: " << sock_->System().getRemoteIP(sock_) << "\n";			
 
 		if (!sock_->connect("127.0.0.1",8050,false))
 		{
@@ -176,7 +144,6 @@ public:
 	}
 
 private:
-	Socket* sock_;
 	BlockingQueue<std::string>* pInQ;
 	BlockingQueue<std::string>* pOutQ;
 };
@@ -185,6 +152,7 @@ IChannel^ IChannel::CreateChannel()
 {
 	return gcnew MockChannel();
 }
+
 
 int main()
 {

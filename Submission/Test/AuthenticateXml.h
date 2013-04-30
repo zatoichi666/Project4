@@ -71,7 +71,7 @@ public:
 
 	user getUserByUsername(std::string username)
 	{ 
-		for (int i=0;i<ul.size();i++)
+		for (size_t i=0;i<ul.size();i++)
 		{
 			if (ul[i].username == username)
 				return ul[i];
@@ -93,7 +93,7 @@ public:
 		std::cout << std::string(80, '_') << std::endl;
 
 
-		for (int i=0;i<ul.size();i++)
+		for (size_t i=0;i<ul.size();i++)
 		{
 			std::cout << std::setw(20) << ul[i].getUsername();
 			std::cout << std::setw(20) << ul[i].getPassword();
@@ -148,7 +148,7 @@ public:
 		//uList_s::iterator iter = ul.getUserList().begin();
 		//while(iter != ul.getUserList().end())
 
-		for (int i=0;i<ul.getUserList().size();i++)
+		for (size_t i=0;i<ul.getUserList().size();i++)
 		{
 			XmlWriter vertXml;
 			vertXml.start("userAuth");
