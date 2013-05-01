@@ -105,9 +105,7 @@ ThreadBase<TerminatePolicy>::ThreadBase()
               0,                // default stack size
               threadOps,        // function that thread runs
               (void*)this,      // static function can access thread members
-              CREATE_SUSPENDED, // start thread suspended, call start() to 
-#endif
-run
+              CREATE_SUSPENDED, // start thread suspended, call start() to run
               &_threadID        // OS thread identifier
               );
   if(hThread == 0)
@@ -141,4 +139,5 @@ void ThreadBase<TerminatePolicy>::join()
   ::WaitForSingleObject(hThread,INFINITE);
   doLog("wait over - thread exited");
 }
-
+
+#endif

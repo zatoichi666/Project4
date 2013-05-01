@@ -92,7 +92,25 @@ void printTestFolderContents()
 	std::cout << "|   test5.cpp                " << std::endl;
 	std::cout << "|                            " << std::endl;
 	std::cout << "L---test1                    " << std::endl;
-	std::cout << "    |---test2                " << std::endl;
+	std::cout << "    |---test2                " << std::e+iterTxt)
+		std::cout << *iterTxt << std::endl;
+
+	std::vector<std::string> vecTxtFilesNonR;
+	std::cout << "\nStarting in "<< path << " and running nonrecursively." << std::endl;
+
+	findFile_r(vecTxtFilesNonR, dir, false, getFileExtensionList() );
+
+	for(std::vector<std::string>::iterator iterTxt = vecTxtFilesNonR.begin();
+		iterTxt != vecTxtFilesNonR.end();
+		++iterTxt)
+		std::cout << *iterTxt << std::endl;
+
+	std::cout << "Finished" << std::endl;
+
+	return 0;
+}
+
+#endifndl;
 	std::cout << "    |       test2.h          " << std::endl;
 	std::cout << "    |                        " << std::endl;
 	std::cout << "    L---test3                " << std::endl;
@@ -118,22 +136,4 @@ int main()
 
 	for(std::vector<std::string>::iterator iterTxt = vecTxtFiles.begin();
 		iterTxt != vecTxtFiles.end();
-		++iterTxt)
-		std::cout << *iterTxt << std::endl;
-
-	std::vector<std::string> vecTxtFilesNonR;
-	std::cout << "\nStarting in "<< path << " and running nonrecursively." << std::endl;
-
-	findFile_r(vecTxtFilesNonR, dir, false, getFileExtensionList() );
-
-	for(std::vector<std::string>::iterator iterTxt = vecTxtFilesNonR.begin();
-		iterTxt != vecTxtFilesNonR.end();
-		++iterTxt)
-		std::cout << *iterTxt << std::endl;
-
-	std::cout << "Finished" << std::endl;
-
-	return 0;
-}
-
-#endif
+		+

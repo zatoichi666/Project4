@@ -76,6 +76,8 @@ private:
 	void processMessage(std::string message);
 	std::vector<std::string> Receiver::getListOfMissingPackagesFromPendingCheckin();
 	void Receiver::scanPendingCheckinForDependencies();
+	void Receiver::processQueryPackageListMessage(std::string message);
+	void Receiver::processCheckinCmd( std::string message );
 	void Receiver::processCheckinRequestMsg(std::string message);
 	void Receiver::processNewCheckin(std::string message); 
 	void Receiver::sendAckBinMsg(std::string fileName, int port, std::string ip );

@@ -128,38 +128,28 @@ void Receiver::processMessage(std::string message)
 			sout << " Receiver: Got the last packet of " << fi.name() << "\n";
 	}
 	if (messageType == "queryMd5")
-	{
-		int isLastPacket = 0;
 		processQueryMd5Msg( message );
-	}
+	
 	if (messageType == "ackMd5")
-	{
-		int isLastPacket = 0;
 		processAckMd5Msg( message );
-	}
-	if (messageType == "ackBin")
-	{
-		int isLastPacket = 0;
+	
+	if (messageType == "ackBin")	
 		processAckBinMsg( message );
-	}
+	
 	if (messageType == "loginReqMsg")
-	{
-		int isLastPacket = 0;
 		processLoginRequestMessage( message );
-	}
+	
 	if (messageType == "newCheckin")
-	{
-		int isLastPacket = 0;
-		processNewCheckin( message );
-	}
+		processNewCheckin( message );	
 
 	if (messageType == "checkinRequest")
-	{
-		int isLastPacket = 0;
 		processCheckinRequestMsg( message );
-	}
+	
+	if (messageType == "queryPackages")
+		processQueryPackageListMessage( message );
 
-
+	if (messageType == "checkinCmd")
+		processCheckinCmd( message );
 }
 
 void Receiver::processAckMd5Msg(std::string message )
@@ -271,7 +261,15 @@ void Receiver::processQueryMd5Msg(std::string message )
 		thr.join();
 }
 
+void Receiver::processQueryPackageListMessage(std::string message)
+{
+	sout << "\n Got a queryPackageList message\n";
+}
+void Receiver::processCheckinCmd( std::string message )
+{
+	sout << "\n Got a checkinCmd\n";
 
+}
 
 void Receiver::processCheckinRequestMsg(std::string message)
 {

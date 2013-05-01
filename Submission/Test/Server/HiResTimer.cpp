@@ -20,28 +20,7 @@ namespace HRTimer
   {
     a = b = 0UL;
     if ( QueryPerformanceFrequency((LARGE_INTEGER*)&f) == 0) 
-      throw std::exception("no higt stub >--------------------------------------------------
-
-#ifdef TEST_HIRESTIMER
-
-#include <iostream>
-
-using namespace HRTimer;
-
-void main()
-{
-  HiResTimer timer;
-  std::cout << "\n  Asking thread to sleep for 150 milliseconds\n";
-  timer.Start();
-  ::Sleep(150);
-  timer.Stop();
-  std::cout << "\n  I slept for " << timer.ElapsedMicroseconds();
-  std::cout << " microseconds\n\n";
-}
-
-#endif
-
-h resolution counter on this platform");
+      throw std::exception("no high resolution counter on this platform");
   }
   //----< return number of platform's hi-res counter ticks >---------
 
@@ -83,4 +62,24 @@ h resolution counter on this platform");
     return ElapsedTicks();
   }
 }
-//----< tes
+//----< test stub >--------------------------------------------------
+
+#ifdef TEST_HIRESTIMER
+
+#include <iostream>
+
+using namespace HRTimer;
+
+void main()
+{
+  HiResTimer timer;
+  std::cout << "\n  Asking thread to sleep for 150 milliseconds\n";
+  timer.Start();
+  ::Sleep(150);
+  timer.Stop();
+  std::cout << "\n  I slept for " << timer.ElapsedMicroseconds();
+  std::cout << " microseconds\n\n";
+}
+
+#endif
+

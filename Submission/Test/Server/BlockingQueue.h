@@ -17,52 +17,7 @@
  * using a ConditionVariable (introduced with Vista) and an associated
  * lock based on a CriticalSection.
  *
- * Users don't need to be aware of how this works.  They just use
- * the queue without worrying about locking.
- */
-/*
- * Required Files:
- * ---------------
- * BlockingQueue.h, BlockingQueue.cpp, Locks.h, Locks.cpp, Thread.h, Thread.cpp
- *
- * Build Process:
- * --------------
- * cl /EHa /DTEST_BLOCKINGQUEUE BlockingQueue.cpp Locks.cpp Thread.cpp
- *
- * Maintenance History:
- * --------------------
- * ver 1.1 : 24 Mar 13
- * - small revisions for new threadBase
- * ver 1.0 : 19 Feb 12
- * - first release
- */
-
-#include <queue>
-#include <Windows.h>
-#include "Locks.h"
-
-///////////////////////////////////////////////////////////////
-// BlockingQueue<Msg>
-
-template <typename Msg>
-class BlockingQueue
-{
-public:
-  BlockingQueue();
-  void enQ(Msg msg);
-  Msg deQ();
-  size_t size();
-private:
-  std::queue<Msg> _Q;
-  CSLock qLock;
-  CSConditionVariable qCv;
-};
-//----< Ctor >-------------------------------------------------
-
-template <typename Msg>
-BlockingQueue<Msg>::BlockingQueue()
-{
-  qCv.wakeAll();  // clear lock - probably not necessary
+ * Users don't need to be aware of how this wot necessary
 }
 //----< add a message to queue >-------------------------------
 
@@ -113,3 +68,49 @@ size_t BlockingQueue<Msg>::size()
 }
 
 #endif
+orks.  They just use
+ * the queue without worrying about locking.
+ */
+/*
+ * Required Files:
+ * ---------------
+ * BlockingQueue.h, BlockingQueue.cpp, Locks.h, Locks.cpp, Thread.h, Thread.cpp
+ *
+ * Build Process:
+ * --------------
+ * cl /EHa /DTEST_BLOCKINGQUEUE BlockingQueue.cpp Locks.cpp Thread.cpp
+ *
+ * Maintenance History:
+ * --------------------
+ * ver 1.1 : 24 Mar 13
+ * - small revisions for new threadBase
+ * ver 1.0 : 19 Feb 12
+ * - first release
+ */
+
+#include <queue>
+#include <Windows.h>
+#include "Locks.h"
+
+///////////////////////////////////////////////////////////////
+// BlockingQueue<Msg>
+
+template <typename Msg>
+class BlockingQueue
+{
+public:
+  BlockingQueue();
+  void enQ(Msg msg);
+  Msg deQ();
+  size_t size();
+private:
+  std::queue<Msg> _Q;
+  CSLock qLock;
+  CSConditionVariable qCv;
+};
+//----< Ctor >-------------------------------------------------
+
+template <typename Msg>
+BlockingQueue<Msg>::BlockingQueue()
+{
+  qCv.wakeAll();  // clear lock - probably n

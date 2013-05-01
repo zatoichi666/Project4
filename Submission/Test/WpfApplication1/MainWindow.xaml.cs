@@ -42,6 +42,8 @@ namespace WpfApplication1
         String serverIP;
         String userName;
         String password;
+        uint missingPackages;
+
 
         private mockChannel.IChannel chan;
 
@@ -53,6 +55,7 @@ namespace WpfApplication1
             serverIP = srvIP;
             userName = uName;
             password = pWord;
+            missingPackages = 0;
 
             InitializeComponent();
 
@@ -62,6 +65,16 @@ namespace WpfApplication1
         {
             string msg = "Received Message: " + item;
             ListBoxSessionOutput.Items.Add(msg);
+        }
+
+        private String MakeQueryPackageListMessage(string ipSender, int portSender)
+        {
+            String header = "";
+            header = "[queryPackages;";
+            header += "ipSender='" + ipSender + "'";
+            header += "portSender='" + (portSender).ToString() + "'";
+            header += "]";
+            return header;
         }
 
         private String MakeQueryMd5AckMessage(string filename, string ipSender, int portSender)
@@ -89,6 +102,15 @@ namespace WpfApplication1
             String header;
             header = "[checkinRequest;";
             header += "]";
+            return header;
+        }
+
+        private String MakeCheckinCommand(String userName, String packageName)
+        {
+            String header;
+            header = "[checkinCmd;";
+            header += "userName='" + userName + "'";
+            header += "packageName='" + packageName + "'";
             return header;
         }
 
@@ -128,6 +150,9 @@ namespace WpfApplication1
             string msg = MakeLoginRequestMessage();
             chan.postMessage(msg);
 
+            msg = MakeQueryPackageListMessage("127.0.0.1", 8080);
+            chan.postMessage(msg);
+
             msg = MakeNewCheckinMessage("new");
             chan.postMessage(msg);
 
@@ -142,9 +167,10 @@ namespace WpfApplication1
 
         private void setFormControls(Boolean ctrl)
         {
-            buttonPostMessage.IsEnabled = ctrl;
+            buttonPropose.IsEnabled = ctrl;
             buttonBrowse.IsEnabled = ctrl;
-            buttonGetFiles.IsEnabled = ctrl;
+
+
             textBoxDirectory.IsEnabled = ctrl;
             listBoxLocalFiles.IsEnabled = ctrl;
             if (ctrl == true)
@@ -161,11 +187,8 @@ namespace WpfApplication1
             foreach (string file in files)
                 listBoxLocalFiles.Items.Add(System.IO.Path.GetFileName(file));
 
-            string[] dirs = Directory.GetDirectories(textBoxDirectory.Text, "*.*");
-            foreach (string dir in dirs)
-                listBoxLocalFiles.Items.Add(System.IO.Path.GetFileName(dir) + "/");
-
             setFormControls(false);
+            buttonCheckin.IsEnabled = false;
 
             chan = mockChannel.IChannel.CreateChannel();
 
@@ -175,50 +198,8 @@ namespace WpfApplication1
 
         }
 
-        private void Button_Click_1(object sender, RoutedEventArgs e)
-        {
-            FolderBrowserDialog fbd = new FolderBrowserDialog();
-            fbd.ShowNewFolderButton = false;
-            fbd.SelectedPath = textBoxDirectory.Text;
-            DialogResult result = fbd.ShowDialog();
-            if (result == System.Windows.Forms.DialogResult.OK)
-            {
-                Directory.SetCurrentDirectory(fbd.SelectedPath);
-                textBoxDirectory.Text = fbd.SelectedPath;
-                listBoxLocalFiles.Items.Clear();
-                string[] files = Directory.GetFiles(textBoxDirectory.Text, "*.*");
-                foreach (string file in files)
-                    listBoxLocalFiles.Items.Add(System.IO.Path.GetFileName(file));
-
-                string[] dirs = Directory.GetDirectories(textBoxDirectory.Text, "*.*");
-                foreach (string dir in dirs)
-                    listBoxLocalFiles.Items.Add(System.IO.Path.GetFileName(dir) + "\\");
 
 
-            }
-        }
-
-        private void Button_Click_2(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog ofd = new OpenFileDialog();
-            ofd.InitialDirectory = textBoxDirectory.Text;
-            ofd.Multiselect = true;
-            System.Windows.Forms.DialogResult result = ofd.ShowDialog();
-            if (result == System.Windows.Forms.DialogResult.OK)
-            {
-                listBoxLocalFiles.Items.Clear();
-                string[] files = ofd.FileNames;
-                foreach (string file in files)
-                    listBoxLocalFiles.Items.Add(System.IO.Path.GetFileName(file));
-            }
-            buttonPostMessage.IsEnabled = true;
-        }
-
-        private void Button_Click_3(object sender, RoutedEventArgs e)
-        {
-            String msg = MakeCheckinRequestMessage();
-            chan.postMessage(msg);
-        }
 
         private void sendBinFileToRemoteServer(string filename)
         {
@@ -235,12 +216,56 @@ namespace WpfApplication1
 
         private void processMissingPackMsg(string message)
         {
-            Dispatcher.BeginInvoke(new Action(() =>
-            {
-                ListBoxSessionOutput.Items.Add("Got Missing Package Message");
-            }));
-        }
+            int posCountStart = message.IndexOf("count='");
+            int posCountStop = message.IndexOf("'", posCountStart + 6);
 
+            string count = "";
+            if (posCountStart > -1 && posCountStop > -1)
+                count = message.Substring(posCountStart + 7, posCountStop - posCountStart - 5);
+
+
+
+            if (count != "0")
+            {
+
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    ListBoxSessionOutput.Items.Add("Got Missing Package Message");
+                    ListBoxPending.BorderBrush = Brushes.Red;
+                    buttonCheckin.BorderBrush = Brushes.Red;
+
+                }));
+            }
+            else
+            {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (ListBoxPending.Items.Count > 0)
+                    {
+                        ListBoxPending.BorderBrush = Brushes.Green;
+                        buttonCheckin.BorderBrush = Brushes.Green;
+
+                        buttonCheckin.IsEnabled = true;
+                        if (TextBoxPackageTitle.Text.Length == 0)
+                        {
+                            buttonCheckin.IsEnabled = false;
+                            TextBoxPackageTitle.BorderBrush = Brushes.Red;
+                        }
+                        else
+                        {
+                            buttonCheckin.IsEnabled = true;
+                            TextBoxPackageTitle.BorderBrush = Brushes.Green;
+                        }
+                    }
+                    else
+                    {
+                        ListBoxPending.BorderBrush = Brushes.Red;
+                        buttonCheckin.BorderBrush = Brushes.Red;
+                        buttonCheckin.IsEnabled = false;
+                    }
+                }));
+            }
+        }
 
         private Boolean processAckLoginMsg(string message)
         {
@@ -281,6 +306,42 @@ namespace WpfApplication1
 
         }
 
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            FolderBrowserDialog fbd = new FolderBrowserDialog();
+            fbd.ShowNewFolderButton = false;
+            fbd.SelectedPath = textBoxDirectory.Text;
+            DialogResult result = fbd.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                Directory.SetCurrentDirectory(fbd.SelectedPath);
+                textBoxDirectory.Text = fbd.SelectedPath;
+                listBoxLocalFiles.Items.Clear();
+                string[] files = Directory.GetFiles(textBoxDirectory.Text, "*.*");
+                foreach (string file in files)
+                    listBoxLocalFiles.Items.Add(System.IO.Path.GetFileName(file));
+
+            }
+        }
+
+        private void Button_Click_2(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.InitialDirectory = textBoxDirectory.Text;
+            ofd.Multiselect = true;
+            System.Windows.Forms.DialogResult result = ofd.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                listBoxLocalFiles.Items.Clear();
+                string[] files = ofd.FileNames;
+                foreach (string file in files)
+                    listBoxLocalFiles.Items.Add(System.IO.Path.GetFileName(file));
+            }
+            buttonPropose.IsEnabled = true;
+        }
+
+
         private void ButtonRemoveFromPending_Click(object sender, RoutedEventArgs e)
         {
             ListBoxPending.Items.Remove(ListBoxPending.SelectedItem);
@@ -290,7 +351,7 @@ namespace WpfApplication1
 
         private void ButtonAddToPending_Click(object sender, RoutedEventArgs e)
         {
-            String fileToAdd;                 
+            String fileToAdd;
 
             for (int i = 0; i < listBoxLocalFiles.SelectedItems.Count; i++)
             {
@@ -298,7 +359,7 @@ namespace WpfApplication1
                 sendBinFileToRemoteServer(fileToAdd);
                 ListBoxPending.Items.Add(fileToAdd);
             }
-    
+
         }
 
         private void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -309,6 +370,20 @@ namespace WpfApplication1
         private void listBoxLocalFiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
 
+        }
+
+        private void ButtonPropose_Click(object sender, RoutedEventArgs e)
+        {
+            String msg = MakeCheckinRequestMessage();
+            chan.postMessage(msg);
+
+        }
+
+
+        private void buttonCheckin_Click(object sender, RoutedEventArgs e)
+        {
+            String msg = MakeCheckinCommand(userName, TextBoxPackageTitle.Text);
+            chan.postMessage(msg);
         }
 
 

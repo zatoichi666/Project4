@@ -57,7 +57,58 @@ class CSLock
 public:
   CSLock();
   ~CSLock();
-  voSLock<i>::refCount = 0;
+  void lock();
+  void unlock();
+  operator ::CRITICAL_SECTION* ();  // cast operator used with CV
+private:
+  ::CRITICAL_SECTION cs;
+};
+
+inline CSLock::CSLock()
+{
+  ::InitializeCriticalSection(&cs);
+}
+
+inline CSLock::~CSLock() 
+{ 
+  ::DeleteCriticalSection(&cs); 
+}
+
+inline void CSLock::lock() 
+{ 
+  ::EnterCriticalSection(&cs);
+}
+
+inline void CSLock::unlock()
+{
+  ::LeaveCriticalSection(&cs);
+}
+
+inline CSLock::operator ::CRITICAL_SECTION* () { return &cs; }
+
+///////////////////////////////////////////////////////////////
+// gCSLock - global lock class based on Win32 CRITICAL_SECTION
+
+template<int i>
+class gCSLock
+{
+public:
+  gCSLock();
+  ~gCSLock();
+  void lock();
+  void unlock();
+  operator ::CRITICAL_SECTION* ();  // cast operator used with CV
+private:
+  static ::CRITICAL_SECTION cs;
+  static unsigned int refCount;
+};
+
+//----< statics are only initialized by first caller >---------
+
+template<int i>
+::CRITICAL_SECTION gCSLock<i>::cs;
+template<int i>
+unsigned int gCSLock<i>::refCount = 0;
 
 template<int i>
 gCSLock<i>::gCSLock()
@@ -111,58 +162,7 @@ private:
   ::HANDLE hMutex;
 };
 
-inlid lock();
-  void unlock();
-  operator ::CRITICAL_SECTION* ();  // cast operator used with CV
-private:
-  ::CRITICAL_SECTION cs;
-};
-
-inline CSLock::CSLock()
-{
-  ::InitializeCriticalSection(&cs);
-}
-
-inline CSLock::~CSLock() 
-{ 
-  ::DeleteCriticalSection(&cs); 
-}
-
-inline void CSLock::lock() 
-{ 
-  ::EnterCriticalSection(&cs);
-}
-
-inline void CSLock::unlock()
-{
-  ::LeaveCriticalSection(&cs);
-}
-
-inline CSLock::operator ::CRITICAL_SECTION* () { return &cs; }
-
-///////////////////////////////////////////////////////////////
-// gCSLock - global lock class based on Win32 CRITICAL_SECTION
-
-template<int i>
-class gCSLock
-{
-public:
-  gCSLock();
-  ~gCSLock();
-  void lock();
-  void unlock();
-  operator ::CRITICAL_SECTION* ();  // cast operator used with CV
-private:
-  static ::CRITICAL_SECTION cs;
-  static unsigned int refCount;
-};
-
-//----< statics are only initialized by first caller >---------
-
-template<int i>
-::CRITICAL_SECTION gCSLock<i>::cs;
-template<int i>
-unsigned int gCine MLock::MLock()
+inline MLock::MLock()
 {
   hMutex = CreateMutexA
            (
@@ -445,26 +445,6 @@ private:
   std::ostream& _out;
 };
 //----< constructor >------------------------------------------------
-cker(syncOut& so)
-{
-  gCSLock<-1>().unlock();
-  return so;
-}
-
-extern syncOut sout;
-
-/////////////////////////////////////////////////////////////////////
-// debug Macro
-
-inline void doLog(const char* pChar)
-{
-#ifdef DOLOG
-  sout << locker << "\n  " << pChar << unlocker;
-#endif
-}
-
-
-#endif
 
 inline syncOut::syncOut(std::ostream& out) : _out(out) {}
 
@@ -509,4 +489,23 @@ inline syncOut& locker(syncOut& so)
 
 //----< unlock manipulator >-----------------------------------------
 
-inline syncOut& unlo
+inline syncOut& unlocker(syncOut& so)
+{
+  gCSLock<-1>().unlock();
+  return so;
+}
+
+extern syncOut sout;
+
+/////////////////////////////////////////////////////////////////////
+// debug Macro
+
+inline void doLog(const char* pChar)
+{
+#ifdef DOLOG
+  sout << locker << "\n  " << pChar << unlocker;
+#endif
+}
+
+
+#endif

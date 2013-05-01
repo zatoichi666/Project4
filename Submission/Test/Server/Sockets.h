@@ -121,21 +121,7 @@
 
 */
 
-#iidSocketCount();
-private:
-  SOCKADDR_IN tcpAddr;
-  Socket s_;
-  SocketSystem ss_;
-  volatile long InvalidSocketCount;
-};
-
-inline long SocketListener::getInvalidSocketCount() 
-{ 
-  return InvalidSocketCount; 
-}
-
-#endif
-nclude <string>
+#include <string>
 #include <winsock2.h>
 
 
@@ -177,7 +163,21 @@ class Socket
 public:
   Socket();
   Socket(const Socket& sock);
-  Socket(SOCKET s);
+  Socket(SOCKETidSocketCount();
+private:
+  SOCKADDR_IN tcpAddr;
+  Socket s_;
+  SocketSystem ss_;
+  volatile long InvalidSocketCount;
+};
+
+inline long SocketListener::getInvalidSocketCount() 
+{ 
+  return InvalidSocketCount; 
+}
+
+#endif
+ s);
   ~Socket();
   Socket& operator=(const Socket& sock);
   Socket& operator=(SOCKET sock);

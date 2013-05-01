@@ -544,7 +544,44 @@ std::string Path::getFullFileSpec(const std::string &fileSpec)
 
 std::string Path::fileSpec(const std::string &path, const std::string &name)
 {
-	std: files;
+	std::string fs;
+	size_t len = path.size();
+	if(path[len-1] == '/' || path[len-1] == '\\')
+		fs = path + name;
+	else
+	{
+		if(path.find("/") < path.size())
+			fs = path + "/" + name;
+		else if(path.find("\\") < path.size())
+			fs = path + "\\" + name;
+		else
+			fs = path + "/" + name;
+	}
+	return fs;
+}
+//----< return name of the current directory >-----------------------------
+
+std::string Directory::getCurrentDirectory()
+{
+	char buffer[MAX_PATH];
+	::GetCurrentDirectoryA(MAX_PATH,buffer);
+	return std::string(buffer);
+}
+//----< change the current directory to path >-----------------------------
+
+bool Directory::setCurrentDirectory(const std::string& path)
+{
+	return ::SetCurrentDirectoryA(path.c_str()) != 0;
+}
+//----< get names of all the files matching pattern (path:name) >----------
+
+std::vector<std::string> Directory::getFiles(const std::string& path, const std::string& pattern)
+{
+	std::vector<std::string> files;
+	FileSystemSearch fss;
+	std::string file = fss.firstFile(path, pattern);
+	if(file.size() == 0)
+		return files;
 	files.push_back(file);
 	while(true)
 	{
@@ -586,73 +623,7 @@ bool Directory::exists(const std::string& path)
 {
 	DWORD dwAttrib = GetFileAttributesA(path.c_str());
 
-	return (dwAttrib != INVALID_:string fs;
-	size_t len = path.size();
-	if(path[len-1] == '/' || path[len-1] == '\\')
-		fs = path + name;
-	else
-	{
-		if(path.find("/") < path.size())
-			fs = path + "/" + name;
-		else if(path.find("\\") < path.size())
-			fs = path + "\\" + name;
-		else
-			fs = path + "/" + name;
-	}
-	return fs;
-}
-//----< return name of the current directory >-----------------------------
-
-std::string Directory::getCurrentDirectory()
-{
-	char buffer[MAX_PATH];
-	::GetCurrentDirectoryA(MAX_PATH,buffer);
-	return std::string(buffer);
-}
-//----< change the current directory to path >-----------------------------
-
-bool Directory::setCurrentDirectory(const std::string& path)
-{
-	return ::SetCurrentDirectoryA(path.c_str()) != 0;
-}
-//----< get names of all the files matching pattern (path:name) >----------
-
-std::vector<std::string> Directory::getFiles(const std::string& path, const std::string& pattern)
-{
-	std::vector<std::string> files;
-	FileSystemSearch fss;
-	std::string file = fss.firstFile(path, pattern);
-	if(file.size() == 0)
-		returneAttributes & FILE_ATTRIBUTE_DIRECTORY))
-			return pFindFileData->cFileName;
-	return "";
-}
-//----< find first file >--------------------------------------------------
-
-std::string FileSystemSearch::firstDirectory(const std::string& path, const std::string& pattern)
-{
-	hFindFile = ::FindFirstFileA(Path::fileSpec(path, pattern).c_str(), pFindFileData);
-	if(hFindFile != INVALID_HANDLE_VALUE)
-	{
-		if(pFindFileData->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-			return pFindFileData->cFileName;
-		else
-			while(::FindNextFileA(hFindFile, pFindFileData))
-				if(pFindFileData->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-					return pFindFileData->cFileName;
-	}
-	return "";
-}
-//----< find next file >---------------------------------------------------
-
-std::string FileSystemSearch::nextDirectory()
-{
-	while(::FindNextFileA(hFindFile, pFindFileData))
-		if(pFindFileData->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-			return pFindFileData->cFileName;
-	return "";
-}
-//----< test stub >--------------------------------------FILE_ATTRIBUTES && 
+	return (dwAttrib != INVALID_FILE_ATTRIBUTES && 
 		(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 //----< remove directory >-------------------------------------------------
@@ -682,7 +653,36 @@ std::string FileSystemSearch::firstFile(const std::string& path, const std::stri
 std::string FileSystemSearch::nextFile()
 {
 	while(::FindNextFileA(hFindFile, pFindFileData))
-		if(!(pFindFileData->dwFil------------------
+		if(!(pFindFileData->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+			return pFindFileData->cFileName;
+	return "";
+}
+//----< find first file >--------------------------------------------------
+
+std::string FileSystemSearch::firstDirectory(const std::string& path, const std::string& pattern)
+{
+	hFindFile = ::FindFirstFileA(Path::fileSpec(path, pattern).c_str(), pFindFileData);
+	if(hFindFile != INVALID_HANDLE_VALUE)
+	{
+		if(pFindFileData->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			return pFindFileData->cFileName;
+		else
+			while(::FindNextFileA(hFindFile, pFindFileData))
+				if(pFindFileData->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+					return pFindFileData->cFileName;
+	}
+	return "";
+}
+//----< find next file >---------------------------------------------------
+
+std::string FileSystemSearch::nextDirectory()
+{
+	while(::FindNextFileA(hFindFile, pFindFileData))
+		if(pFindFileData->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			return pFindFileData->cFileName;
+	return "";
+}
+//----< test stub >--------------------------------------------------------
 
 #ifdef TEST_FILESYSTEM
 
@@ -926,7 +926,35 @@ int main(int argc, char* argv[])
 				Block b = me.getBlock(1024);
 				std::cout << "\n    reading block of " << b.size() << " bytes";
 				you.putBlock(b);
-				std::cout << "\n    writing block of " << b.size() << " bytes"; 
+				std::cout << "\n    writi;
+		for(int j=0; j<10; ++j)
+		{
+			if(!file.isGood())
+				break;
+			std::cout << "\n  " << file.getLine().c_str();
+		}
+		std::cout << "\n";
+	}
+	std::cout << "\n";
+
+	// read text file and write to another text file
+
+	title("writing to c:/temp/test.txt", '-');
+	File in("../test.txt");
+	in.open(File::in);
+	File out("c:/temp/test.txt");
+	out.open(File::out);
+	while(in.isGood())
+	{
+		std::string temp = in.getLine();
+		std::cout << "\n  " << temp.c_str();
+		out.putLine(temp);
+		out.putLine("\n");
+	}
+	std::cout << "\n\n";
+}
+#endif
+ng block of " << b.size() << " bytes"; 
 			}
 			std::cout << "\n";
 		}
@@ -962,31 +990,4 @@ int main(int argc, char* argv[])
 			continue;
 		}
 		std::string temp = std::string("Processing file ") + files[i];
-		title(temp, '-');
-		for(int j=0; j<10; ++j)
-		{
-			if(!file.isGood())
-				break;
-			std::cout << "\n  " << file.getLine().c_str();
-		}
-		std::cout << "\n";
-	}
-	std::cout << "\n";
-
-	// read text file and write to another text file
-
-	title("writing to c:/temp/test.txt", '-');
-	File in("../test.txt");
-	in.open(File::in);
-	File out("c:/temp/test.txt");
-	out.open(File::out);
-	while(in.isGood())
-	{
-		std::string temp = in.getLine();
-		std::cout << "\n  " << temp.c_str();
-		out.putLine(temp);
-		out.putLine("\n");
-	}
-	std::cout << "\n\n";
-}
-#endif
+		title(temp, '-')

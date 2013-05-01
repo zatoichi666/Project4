@@ -26,7 +26,47 @@ std::string IntToString(const int num)
 }
 //----< get socket error message string >----------------------------
 
-std::string SocketSystem::G
+std::string SocketSystem::GetLastMsg(bool WantSocketMsg) {
+
+// ask system what type of error occurred
+
+  DWORD errorCode;
+  if(WantSocketMsg)
+    errorCode = WSAGetLastError();
+  else
+    errorCode = GetLastError();
+  if(errorCode == 0)
+    return "no error";
+
+// map errorCode into a system defined error string
+    
+  DWORD dwFlags = 
+    FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER;
+  LPCVOID lpSource = NULL;
+  DWORD dwMessageID = errorCode;
+  DWORD dwLanguageId = MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US);
+  LPSTR lpBuffer;
+  DWORD nSize = 0;
+  va_list *Arguments = NULL;
+
+  FormatMessage(
+    dwFlags,lpSource,dwMessageID,dwLanguageId, 
+    (LPTSTR)&lpBuffer,nSize,Arguments
+  );
+
+  std::string _msg(lpBuffer);
+  LocalFree(lpBuffer);
+  return _msg;
+}
+//
+//----< load WinSock Library >---------------------------------------
+
+SocketSystem::SocketSystem()
+{
+  if(count == 0)
+  {
+    TRACE("loading wsock32 library");
+    WORD wVersionRequested = MAKEWORD(1,1); // requesting version 1.1
     WSAData wData;                          // startup data filled by WSAStartup
     int err = WSAStartup(wVersionRequested, &wData);
     if(err == SOCKET_ERROR)
@@ -165,42 +205,7 @@ bool Socket::connect(std::string url, int port, bool throwError, size_t MaxTries
   while(true)
   {
     ++tryCount;
-    TRACE("attempt to connect #" + IntToString(tryCo< recieve byte block >-----------------------------------------
-
-int Socket::recv(char* block, size_t len)
-{
-  return ::recv(s_,block,len,0);
-}
-//----< return number of bytes waiting >-----------------------------
-
-int Socket::bytesLeft()
-{
-  unsigned long bytes;
-  ::ioctlsocket(s_,FIONREAD,&bytes);
-  return bytes;
-}
-//----< send blocks until all characters are sent >------------------
-
-bool Socket::sendAll(const char* block, size_t len, bool throwError)
-{
-  size_t bytesSent;       // current number of bytes sent
-  size_t blockIndx = 0;   // place in buffer to send next
-  size_t count = 0;       // number of send failures
-
-  const int sendRetries = 100;
-  size_t blockLen = len;
-  size_t bytesLeft = blockLen;
-  while(bytesLeft > 0) {
-    bytesSent = ::send(s_,&block[blockIndx],static_cast<int>(bytesLeft),0);
-    if(bytesSent == SOCKET_ERROR)
-    {
-      sout << "\n  socket error";
-      ++count;
-      Sleep(50);
-      bytesSent = 0;
-    }
-    //sout << "\n  sending retry";
-  unt));
+    TRACE("attempt to connect #" + IntToString(tryCount));
     int err = ::connect(s_, (sockaddr*)&tcpAddr, sizeof(tcpAddr));
      //std::string rip = System().getRemoteIP(this);
     int rport = System().getRemotePort(this);
@@ -242,7 +247,42 @@ int Socket::send(const char* block, size_t len)
 {
   return ::send(s_,block,len,0);
 }
-//----  if(bytesSent == WSAECONNRESET)
+//----< recieve byte block >-----------------------------------------
+
+int Socket::recv(char* block, size_t len)
+{
+  return ::recv(s_,block,len,0);
+}
+//----< return number of bytes waiting >-----------------------------
+
+int Socket::bytesLeft()
+{
+  unsigned long bytes;
+  ::ioctlsocket(s_,FIONREAD,&bytes);
+  return bytes;
+}
+//----< send blocks until all characters are sent >------------------
+
+bool Socket::sendAll(const char* block, size_t len, bool throwError)
+{
+  size_t bytesSent;       // current number of bytes sent
+  size_t blockIndx = 0;   // place in buffer to send next
+  size_t count = 0;       // number of send failures
+
+  const int sendRetries = 100;
+  size_t blockLen = len;
+  size_t bytesLeft = blockLen;
+  while(bytesLeft > 0) {
+    bytesSent = ::send(s_,&block[blockIndx],static_cast<int>(bytesLeft),0);
+    if(bytesSent == SOCKET_ERROR)
+    {
+      sout << "\n  socket error";
+      ++count;
+      Sleep(50);
+      bytesSent = 0;
+    }
+    //sout << "\n  sending retry";
+    if(bytesSent == WSAECONNRESET)
     {
       sout << "\n  connection broken";
       if(throwError)
@@ -277,46 +317,7 @@ bool Socket::recvAll(char* block, size_t len, bool throwError)
         throw(std::exception("remote connection closed"));
       return false;
     }
-    if(bytesRecvd == SOCKET_ERRO reads to end of buffer
- * - returns empty string if not successful
- *
- */
-std::string Socket::readLine()
-{
-  std::string temp;
-  char block[1];
-  //while(bytesLeft() > 0)  // don't block
-  while(true)
-  {
-    if(!recvAll(block,1))
-      return "";
-    // save all chars that are not newlines or carriage returns
-    if(block[0] != '\n' && block[0] != '\r')
-      temp += block[0];
-    else
-    {
-      if(bytesLeft() > 0)
-      {
-        // remove remaining newline or carriage return if next in buffer
-        ::recv(s_,block,1,MSG_PEEK);
-        if(block[0] == '\n' || block[0] == '\r')
-          recv(block,1);
-      }
-      return temp;
-    }
-  }
-  return temp;
-}
-//----< get local ip address >---------------------------------------
-
-std::string SocketSystem::getLocalIP()
-{
-  //struct sockaddr name;
-  //int len = sizeof(name);
-  hostent* local = gethostbyname("");
-  return inet_ntoa(*(struct in_addr*)*local->h_addr_list);
-}
-//----< get local port >---------------------------R) {
+    if(bytesRecvd == SOCKET_ERROR) {
       ++count;
       Sleep(50);
     }
@@ -361,7 +362,46 @@ bool Socket::writeLine(const std::string& str)
 }
 //----< read a line of text >----------------------------------------
 /*
- * - removes ending newline if present, else------------------
+ * - removes ending newline if present, else reads to end of buffer
+ * - returns empty string if not successful
+ *
+ */
+std::string Socket::readLine()
+{
+  std::string temp;
+  char block[1];
+  //while(bytesLeft() > 0)  // don't block
+  while(true)
+  {
+    if(!recvAll(block,1))
+      return "";
+    // save all chars that are not newlines or carriage returns
+    if(block[0] != '\n' && block[0] != '\r')
+      temp += block[0];
+    else
+    {
+      if(bytesLeft() > 0)
+      {
+        // remove remaining newline or carriage return if next in buffer
+        ::recv(s_,block,1,MSG_PEEK);
+        if(block[0] == '\n' || block[0] == '\r')
+          recv(block,1);
+      }
+      return temp;
+    }
+  }
+  return temp;
+}
+//----< get local ip address >---------------------------------------
+
+std::string SocketSystem::getLocalIP()
+{
+  //struct sockaddr name;
+  //int len = sizeof(name);
+  hostent* local = gethostbyname("");
+  return inet_ntoa(*(struct in_addr*)*local->h_addr_list);
+}
+//----< get local port >---------------------------------------------
 
 int SocketSystem::getLocalPort(Socket* pSock)
 {
@@ -523,36 +563,7 @@ void main()
 
     // receiving
     std::cout.flush();
-    const inge after reconnecting";
-    std::cout << "\n  Client sending: " << msg1;
-    sendr.writeLine(msg1);
-    std::string temp = recvr.readLine();
-    std::cout << "\n  Server received: " << temp;
-    std::cout << "\n";
-
-    // demonstrating full duplex operation
-    std::cout << "\n  sending from Server back to Client";
-    std::cout << "\n ------------------------------------";
-
-    // sending
-    msg1 = "sending message back";
-    std::cout << "\n  Server sending message: " << msg1;
-    recvr.writeLine(msg1);
-    std::cout << "\n  Server sending message: " << "quit";
-    recvr.writeLine("quit");
-
-    // receiving
-    std::cout << "\n  Client received: " << sendr.readLine();
-    std::cout << "\n  Client received: " << sendr.readLine();
-    std::cout << "\n  Client received: " << sendr.readLine();
-    std::cout << std::endl;
-
-    // copy construction
-    Socket sendrCopy = sendr;
-    Socket recvrCopy = recvr;
-
-    // copy construction
-    std::cout << "\n  sending and recieving with sot BufLen = 256;
+    const int BufLen = 256;
     char buffer[BufLen];
 
     std::cout << "\n  " << recvr.bytesLeft() << " bytes ready for reading";
@@ -613,3 +624,33 @@ void main()
 }
 
 #endif
+ge after reconnecting";
+    std::cout << "\n  Client sending: " << msg1;
+    sendr.writeLine(msg1);
+    std::string temp = recvr.readLine();
+    std::cout << "\n  Server received: " << temp;
+    std::cout << "\n";
+
+    // demonstrating full duplex operation
+    std::cout << "\n  sending from Server back to Client";
+    std::cout << "\n ------------------------------------";
+
+    // sending
+    msg1 = "sending message back";
+    std::cout << "\n  Server sending message: " << msg1;
+    recvr.writeLine(msg1);
+    std::cout << "\n  Server sending message: " << "quit";
+    recvr.writeLine("quit");
+
+    // receiving
+    std::cout << "\n  Client received: " << sendr.readLine();
+    std::cout << "\n  Client received: " << sendr.readLine();
+    std::cout << "\n  Client received: " << sendr.readLine();
+    std::cout << std::endl;
+
+    // copy construction
+    Socket sendrCopy = sendr;
+    Socket recvrCopy = recvr;
+
+    // copy construction
+    std::cout << "\n  sending and recieving with so
